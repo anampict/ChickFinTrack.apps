@@ -11,7 +11,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+    
+  flutter_svg: ^2.0.10+1
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
@@ -24,5 +25,28 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/fonts/
+
+  fonts:
+    - family: InstrumentSans
+      fonts:
+        - asset: assets/fonts/InstrumentSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/InstrumentSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/InstrumentSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/InstrumentSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/InstrumentSans-MediumItalic.ttf
+          weight: 500
+          style: italic
+
+    - family: InstrumentSansCondensed
+      fonts:
+        - asset: assets/fonts/InstrumentSans_Condensed-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/InstrumentSans_Condensed-SemiBold.ttf
+          weight: 600
 
 

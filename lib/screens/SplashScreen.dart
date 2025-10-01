@@ -7,10 +7,7 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Color(0xffEE9400),
-      child: Center(
-        child: Image.asset("assets/images/logoapk.png"),
-      ),
-
+      child: Center(child: Image.asset("assets/images/logoapk.png")),
     );
   }
 }
