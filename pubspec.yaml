@@ -28,7 +28,7 @@ flutter:
     - assets/fonts/
 
   fonts:
-    - family: InstrumentSans
+    - family: Primary
       fonts:
         - asset: assets/fonts/InstrumentSans-Regular.ttf
           weight: 400
