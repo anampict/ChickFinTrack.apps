@@ -3,6 +3,7 @@ import 'package:my_app/component/Menu2.dart';
 import 'package:my_app/screens/admin/HomeScreen.dart';
 import 'package:my_app/screens/SplashScreen.dart';
 import 'package:my_app/screens/admin/TambahKategori.dart';
+import 'package:my_app/screens/admin/TambahKategoriProduk.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const Tambahkategori(), // ⬅️ Splash dulu
+      home: const Tambahkategori(),
     );
   }
 }
