@@ -49,18 +49,21 @@ class Homescreen extends StatelessWidget {
           ],
         ),
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.mail, color: Colors.white),
-            style: IconButton.styleFrom(
-              backgroundColor: Color(0xffF26D2B), // warna background
-              shape: CircleBorder(), // biar bulat
+          Padding(
+            padding: const EdgeInsets.only(right: 12), // kasih jarak ke kanan
+            child: IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.mail, color: Colors.white),
+              style: IconButton.styleFrom(
+                backgroundColor: Color(0xffF26D2B),
+                shape: CircleBorder(),
+              ),
             ),
           ),
         ],
       ),
 
-      // 🔹 Body pakai CustomScrollView
+      // Body pakai CustomScrollView
       body: CustomScrollView(
         slivers: [
           // Header total transaksi
@@ -140,12 +143,22 @@ class Homescreen extends StatelessWidget {
 
                   const SizedBox(height: 4),
                   const Text(
-                    "Jumlah pesanan hari ini: 120",
+                    "Jumlah pesanan hari ini",
                     style: TextStyle(
                       fontSize: 11,
                       fontFamily: "Primary",
                       color: Colors.black,
                       fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  const Text(
+                    "120",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontFamily: "Primary",
+                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -170,12 +183,22 @@ class Homescreen extends StatelessWidget {
                 children: const [
                   Text(
                     "Teralokasikan",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontFamily: "Primary",
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   VerticalDivider(color: Colors.white, thickness: 2),
                   Text(
                     "Belum Teralokasikan",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontFamily: "Primary",
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -184,24 +207,35 @@ class Homescreen extends StatelessWidget {
 
           // Grid Menu
           SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.all(12),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: 23,
+                left: 31,
+                right: 31,
+                bottom: 26,
               ),
               child: GridView.count(
-                crossAxisCount: 4,
+                crossAxisCount: 3,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 28,
                 children: [
-                  _buildMenu(Icons.category, "Kategori"),
-                  _buildMenu(Icons.shopping_basket, "Produk"),
-                  _buildMenu(Icons.receipt_long, "Pesanan"),
-                  _buildMenu(Icons.list_alt, "Transaksi"),
-                  _buildMenu(Icons.print, "Cetak Faktur"),
-                  _buildMenu(Icons.account_balance_wallet, "Piutang"),
+                  _buildMenu(
+                    "assets/icons/kategoriproduk.svg",
+                    "Kategori Produk",
+                  ),
+                  _buildMenu("assets/icons/dataproduk.svg", "Data Produk"),
+                  _buildMenu("assets/icons/pesanan.svg", "Pesanan"),
+                  _buildMenu(
+                    "assets/icons/listtransaksi.svg",
+                    "List Transaksi",
+                  ),
+                  _buildMenu("assets/icons/cetakfaktur.svg", "Cetak Faktur"),
+                  _buildMenu(
+                    "assets/icons/manajemanpengguna.svg",
+                    "Manajemen Pengguna",
+                  ),
                 ],
               ),
             ),
@@ -213,39 +247,62 @@ class Homescreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
                 "Transaksi Baru",
-                style: Theme.of(context).textTheme.titleMedium,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                  fontFamily: "Primary",
+                ),
               ),
             ),
           ),
 
-          // List Transaksi
           SliverList(
             delegate: SliverChildBuilderDelegate((context, index) {
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ), // jarak antar Material
+                child: Material(
+                  elevation: 2,
                   borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text("ID RPA00127$index"),
-                  subtitle: const Text(
-                    "Ayam Pejantan 0,5 dll\nSelasa 06-Mei-2025",
-                  ),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      "Menunggu",
-                      style: TextStyle(color: Colors.orange),
+                  color: Colors.white,
+                  child: Container(
+                    height: 120, // atur tinggi material (bisa disesuaikan)
+                    width: double.infinity, // biar full lebar
+                    padding: const EdgeInsets.all(11), // isi dalam card
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        "ID RPA00127$index",
+                        style: TextStyle(
+                          fontFamily: "Second",
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        "Ayam Pejantan 0,5\ndll\nSelasa 06-Mei-2025",
+                      ),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Color(0xff959595),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          "Menunggu",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: "Primary",
+                            fontWeight: FontWeight.w500,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -268,23 +325,63 @@ class Homescreen extends StatelessWidget {
     );
   }
 
-  // Widget menu kecil
-  Widget _buildMenu(IconData icon, String label) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        CircleAvatar(
-          backgroundColor: Colors.orange.shade100,
-          radius: 24,
-          child: Icon(icon, color: Colors.orange, size: 28),
+  Widget _buildMenu(String iconPath, String label) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 2,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          // TODO: Navigasi
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // isi card
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(height: 40), // ruang untuk icon yang nongol
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: "Primary",
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12), // padding bawah biar lega
+              ],
+            ),
+
+            // icon lingkaran nongol di atas
+            Positioned(
+              top: -20,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFA726),
+                    shape: BoxShape.circle,
+                  ),
+                  child: SvgPicture.asset(iconPath, width: 36, height: 36),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12),
-        ),
-      ],
+      ),
     );
   }
+
+  //widget menu 2
+ 
 }
