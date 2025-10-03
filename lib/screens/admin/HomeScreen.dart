@@ -383,5 +383,4 @@ class Homescreen extends StatelessWidget {
   }
 
   //widget menu 2
- 
 }

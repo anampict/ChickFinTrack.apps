@@ -16,6 +16,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_native_splash: ^2.4.6
   smooth_page_indicator: ^1.1.0
+  image_picker: ^1.1.0
+  permission_handler: ^11.0.1
   
 
 
