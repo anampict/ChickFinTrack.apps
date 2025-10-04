@@ -238,18 +238,21 @@ class _TambahkategoriState extends State<Tambahkategori> {
                     const SizedBox(height: 12),
                     Stack(
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.file(
-                            _selectedImage!,
-                            width: double.infinity,
-                            height: 200,
-                            fit: BoxFit.cover,
+                        // ✅ Bungkus dengan SizedBox supaya ukuran fix
+                        SizedBox(
+                          width: 120,
+                          height: 120,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(
+                              _selectedImage!,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         Positioned(
-                          top: 8,
-                          right: 8,
+                          top: 4,
+                          right: 4,
                           child: GestureDetector(
                             onTap: () {
                               setState(() {
@@ -257,15 +260,15 @@ class _TambahkategoriState extends State<Tambahkategori> {
                               });
                             },
                             child: Container(
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 color: Colors.black54,
                                 shape: BoxShape.circle,
                               ),
                               padding: const EdgeInsets.all(4),
                               child: const Icon(
                                 Icons.close,
-                                color: Colors.orangeAccent,
-                                size: 20,
+                                color: Colors.white,
+                                size: 18,
                               ),
                             ),
                           ),
