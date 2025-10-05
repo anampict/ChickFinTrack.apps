@@ -11,15 +11,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-    
+
   flutter_svg: ^2.0.10+1
   cupertino_icons: ^1.0.8
   flutter_native_splash: ^2.4.6
   smooth_page_indicator: ^1.1.0
   image_picker: ^1.1.0
   permission_handler: ^11.0.1
-  
-
 
 dev_dependencies:
   flutter_test:
@@ -54,6 +52,7 @@ flutter:
           weight: 400
         - asset: assets/fonts/InstrumentSans_Condensed-SemiBold.ttf
           weight: 600
+
     - family: Second
       fonts:
         - asset: assets/fonts/Poppins-Regular.ttf
@@ -64,11 +63,5 @@ flutter:
           weight: 600
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
-
-flutter_native_splash:
-  color: "#EE9400" 
-  image: assets/images/logoapk.png   
-  android: true
-  ios: true
 
 
