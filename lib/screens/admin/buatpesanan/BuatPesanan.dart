@@ -46,6 +46,61 @@ class _BuatpesananState extends State<Buatpesanan> {
     }
   }
 
+  //produk
+  List<ItemPesanan> items = [];
+  final List<String> produkList = ['Ayam utuh', 'jeroan', 'Daging 5 ons'];
+  final TextEditingController totalHargaController = TextEditingController(
+    text: '0',
+  );
+
+  void _tambahItem() {
+    setState(() {
+      final item = ItemPesanan();
+
+      // Set listener untuk hitung subtotal & total harga otomatis
+      item.jumlahController.addListener(() {
+        setState(() {
+          item.hitungSubtotal();
+          _hitungTotalHarga();
+        });
+      });
+      item.hargaController.addListener(() {
+        setState(() {
+          item.hitungSubtotal();
+          _hitungTotalHarga();
+        });
+      });
+
+      items.add(item);
+    });
+  }
+
+  void _hapusItem(int index) {
+    setState(() {
+      items[index].dispose();
+      items.removeAt(index);
+      _hitungTotalHarga();
+    });
+  }
+
+  // Fungsi hitung total harga semua item
+  void _hitungTotalHarga() {
+    int total = 0;
+    for (var item in items) {
+      total += int.tryParse(item.subtotalController.text) ?? 0;
+    }
+    totalHargaController.text = total.toString();
+  }
+
+  @override
+  void dispose() {
+    for (var item in items) {
+      item.dispose();
+    }
+    totalHargaController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,6 +154,7 @@ class _BuatpesananState extends State<Buatpesanan> {
         ],
       ),
       body: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: 80),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -346,9 +402,421 @@ class _BuatpesananState extends State<Buatpesanan> {
                 ],
               ),
             ),
+            //item pesanan
+            Padding(
+              padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header + Tombol Tambah
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Item Pesanan",
+                        style: TextStyle(
+                          fontFamily: "Primary",
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xffF26D2B),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                        ),
+                        onPressed: _tambahItem,
+                        child: const Text(
+                          "Tambah Item",
+                          style: TextStyle(
+                            fontFamily: "Primary",
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Divider(),
+
+                  ...items.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        // Baris Produk + Jumlah + Tombol Hapus
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Produk",
+                                    style: TextStyle(
+                                      fontFamily: "Primary",
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Material(
+                                    elevation: 2,
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: DropdownMenu<String>(
+                                      width: double.infinity,
+                                      initialSelection: item.selectedProduk,
+                                      inputDecorationTheme:
+                                          const InputDecorationTheme(
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.all(
+                                                Radius.circular(8),
+                                              ),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                            filled: true,
+                                            fillColor: Colors.white,
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  vertical: 14,
+                                                  horizontal: 12,
+                                                ),
+                                            hintStyle: TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                      hintText: 'Pilih Produk',
+                                      onSelected: (value) {
+                                        setState(() {
+                                          item.selectedProduk = value;
+                                        });
+                                      },
+                                      dropdownMenuEntries: produkList.map((
+                                        produk,
+                                      ) {
+                                        return DropdownMenuEntry(
+                                          value: produk,
+                                          label: produk,
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Jumlah",
+                                    style: TextStyle(
+                                      fontFamily: "Primary",
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Material(
+                                    elevation: 2,
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: TextField(
+                                      controller: item.jumlahController,
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (_) =>
+                                          setState(item.hitungSubtotal),
+                                      decoration: InputDecoration(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                              horizontal: 12,
+                                            ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        hintText: '0',
+                                        hintStyle: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _hapusItem(index),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+                        // Baris Harga Satuan + Subtotal
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Harga Satuan",
+                                    style: TextStyle(
+                                      fontFamily: "Primary",
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Material(
+                                    elevation: 2,
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: TextField(
+                                      controller: item.hargaController,
+                                      keyboardType: TextInputType.number,
+                                      onChanged: (_) =>
+                                          setState(item.hitungSubtotal),
+                                      decoration: InputDecoration(
+                                        prefixText: 'Rp. ',
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                              horizontal: 12,
+                                            ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        hintText: '0',
+                                        hintStyle: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Subtotal",
+                                    style: TextStyle(
+                                      fontFamily: "Primary",
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Material(
+                                    elevation: 2,
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: TextField(
+                                      controller: item.subtotalController,
+                                      readOnly: true,
+                                      decoration: InputDecoration(
+                                        prefixText: 'Rp. ',
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                              horizontal: 12,
+                                            ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        hintText: '0',
+                                        hintStyle: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Divider(),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Total Harga",
+                    style: TextStyle(
+                      fontFamily: "Primary",
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Material(
+                    elevation: 2,
+                    borderRadius: BorderRadius.circular(8),
+                    child: TextField(
+                      controller: totalHargaController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        prefixText: 'Rp. ',
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                          horizontal: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        hintText: '0',
+                        hintStyle: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Tombol Buat Pesanan & Batal
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xffF26D2B),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          onPressed: () {
+                            // Aksi buat pesanan
+                            print(
+                              "Total Pesanan: Rp. ${totalHargaController.text}",
+                            );
+                          },
+                          child: const Text(
+                            "Buat Pesanan",
+                            style: TextStyle(
+                              fontFamily: "Primary",
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.black12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          onPressed: () {
+                            // Aksi batal
+                            setState(() {
+                              items.clear();
+                              totalHargaController.text = '0';
+                            });
+                          },
+                          child: const Text(
+                            "Batal",
+                            style: TextStyle(
+                              fontFamily: "Primary",
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+}
+
+class ItemPesanan {
+  String? selectedProduk;
+  final TextEditingController jumlahController;
+  final TextEditingController hargaController;
+  final TextEditingController subtotalController;
+
+  ItemPesanan({
+    this.selectedProduk,
+    String jumlah = '0',
+    String harga = '0',
+    String subtotal = '0',
+  }) : jumlahController = TextEditingController(text: jumlah),
+       hargaController = TextEditingController(text: harga),
+       subtotalController = TextEditingController(text: subtotal);
+
+  void hitungSubtotal() {
+    final jml = int.tryParse(jumlahController.text) ?? 0;
+    final hrg = int.tryParse(hargaController.text) ?? 0;
+    subtotalController.text = (jml * hrg).toString();
+  }
+
+  void dispose() {
+    jumlahController.dispose();
+    hargaController.dispose();
+    subtotalController.dispose();
   }
 }
