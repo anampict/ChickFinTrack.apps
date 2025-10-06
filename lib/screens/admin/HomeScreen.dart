@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
+import 'package:my_app/screens/admin/produk/DataProduk.dart';
+import 'package:my_app/screens/admin/produk/TambahKategoriProduk.dart';
+import 'package:my_app/screens/admin/produk/TambahProduk.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class Homescreen extends StatefulWidget {
@@ -233,12 +237,40 @@ class _HomescreenState extends State<Homescreen> {
                         _buildMenu(
                           "assets/icons/kategoriproduk.svg",
                           "Kategori Produk",
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const TambahkategoriProduk(),
+                              ),
+                            );
+                          },
                         ),
                         _buildMenu(
                           "assets/icons/dataproduk.svg",
                           "Data Produk",
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const Dataproduk(),
+                              ),
+                            );
+                          },
                         ),
-                        _buildMenu("assets/icons/pesanan.svg", "Pesanan"),
+                        _buildMenu(
+                          "assets/icons/pesanan.svg",
+                          "Pesanan",
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const Buatpesanan(),
+                              ),
+                            );
+                          },
+                        ),
                         _buildMenu(
                           "assets/icons/listtransaksi.svg",
                           "List Transaksi",
@@ -345,26 +377,17 @@ class _HomescreenState extends State<Homescreen> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.orange,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Dashboard"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-        ],
-      ),
     );
   }
 
-  Widget _buildMenu(String iconPath, String label) {
+  Widget _buildMenu(String iconPath, String label, {VoidCallback? onTap}) {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
       elevation: 2,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {},
+        onTap: onTap,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
