@@ -249,24 +249,14 @@ class _HomescreenState extends State<Homescreen> {
                           "assets/icons/dataproduk.svg",
                           "Data Produk",
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const Dataproduk(),
-                              ),
-                            );
+                            Get.toNamed(AppRoutes.DataProduk);
                           },
                         ),
                         _buildMenu(
                           "assets/icons/pesanan.svg",
                           "Pesanan",
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const Buatpesanan(),
-                              ),
-                            );
+                            Get.toNamed(AppRoutes.Pesanan);
                           },
                         ),
                         _buildMenu(

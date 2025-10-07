@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:my_app/routes/app_routes.dart';
 
 class Dataproduk extends StatelessWidget {
   const Dataproduk({super.key});
@@ -84,7 +87,7 @@ class Dataproduk extends StatelessWidget {
                 imagePath:
                     "assets/images/fotoproduk.png", // ganti path sesuai export figma
                 onEdit: () {
-                  print("Edit ditekan");
+                  Get.toNamed(AppRoutes.TambahProduk);
                 },
               ),
             ),
@@ -98,7 +101,7 @@ class Dataproduk extends StatelessWidget {
                 imagePath:
                     "assets/images/fotoproduk.png", // ganti path sesuai export figma
                 onEdit: () {
-                  print("Edit ditekan");
+                  Get.toNamed(AppRoutes.TambahProduk);
                 },
               ),
             ),
@@ -112,7 +115,7 @@ class Dataproduk extends StatelessWidget {
                 imagePath:
                     "assets/images/fotoproduk.png", // ganti path sesuai export figma
                 onEdit: () {
-                  print("Edit ditekan");
+                  Get.toNamed(AppRoutes.TambahProduk);
                 },
               ),
             ),
@@ -126,7 +129,7 @@ class Dataproduk extends StatelessWidget {
                 imagePath:
                     "assets/images/fotoproduk.png", // ganti path sesuai export figma
                 onEdit: () {
-                  print("Edit ditekan");
+                  Get.toNamed(AppRoutes.TambahProduk);
                 },
               ),
             ),
@@ -137,7 +140,7 @@ class Dataproduk extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.orange,
         onPressed: () {
-          print("Tambah produk diklik!");
+          Get.toNamed(AppRoutes.TambahProduk);
         },
         child: Icon(Icons.add, color: Colors.white),
       ),
@@ -216,8 +219,9 @@ class CardProduk extends StatelessWidget {
 
                   const SizedBox(height: 6),
 
-                  // Stok & kategori
-                  Row(
+                  // Stok & kategori (pakai SVG)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -225,35 +229,56 @@ class CardProduk extends StatelessWidget {
                           horizontal: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xffEE6C22),
+                          color: const Color(0xffF0F0F0),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text(
-                          "Stok: $stok",
-                          style: const TextStyle(
-                            fontSize: 9,
-                            fontFamily: "Primary",
-                            color: Colors.white,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/stok.svg', // ganti dengan file svg stok kamu
+                              width: 10,
+                              height: 10,
+                              colorFilter: const ColorFilter.mode(
+                                Color(0xff5B5B5B),
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Stok: $stok",
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontFamily: "Primary",
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(height: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           vertical: 4,
-                          horizontal: 8,
+                          horizontal: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xffEE9400),
+                          color: const Color(0xffF0F0F0),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text(
-                          "Kategori: $kategori",
-                          style: const TextStyle(
-                            fontSize: 9,
-                            fontFamily: "Primary",
-                            color: Colors.white,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(width: 4),
+                            Text(
+                              "Kategori: $kategori",
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontFamily: "Primary",
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

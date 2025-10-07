@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:get/utils.dart';
+import 'package:my_app/routes/app_routes.dart';
 
 class TambahkategoriProduk extends StatelessWidget {
   const TambahkategoriProduk({super.key});
@@ -82,111 +85,105 @@ class TambahkategoriProduk extends StatelessWidget {
             child: Card(
               elevation: 2,
               color: Colors.white,
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 80,
-                  child: Row(
-                    children: [
-                      Card(
-                        color: Color(0xffFFB02E),
-                        child: SizedBox(
-                          width: 60,
-                          height: 60,
-                          child: Center(
-                            child: SvgPicture.asset(
-                              "assets/icons/kategoriproduk.svg",
-                              width: 39,
-                              height: 39,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 20),
-                      Text(
-                        "Ayam Broiler",
-                        style: TextStyle(
-                          fontFamily: "Second",
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Spacer(),
-                      InkWell(
-                        onTap: () {
-                          print("Icon edit diklik!");
-                        },
-                        child: Padding(
-                          padding: EdgeInsets.all(
-                            8,
-                          ), // biar area klik lebih luas
+              child: SizedBox(
+                width: double.infinity,
+                height: 80,
+                child: Row(
+                  children: [
+                    Card(
+                      color: Color(0xffFFB02E),
+                      child: SizedBox(
+                        width: 60,
+                        height: 60,
+                        child: Center(
                           child: SvgPicture.asset(
-                            "assets/icons/edit.svg",
-                            width: 24,
-                            height: 24,
+                            "assets/icons/kategoriproduk.svg",
+                            width: 39,
+                            height: 39,
                           ),
                         ),
                       ),
-                      SizedBox(width: 10),
-                    ],
-                  ),
+                    ),
+                    SizedBox(width: 20),
+                    Text(
+                      "Ayam Broiler",
+                      style: TextStyle(
+                        fontFamily: "Second",
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Spacer(),
+                    InkWell(
+                      onTap: () {
+                        Get.toNamed(AppRoutes.TambahKategori);
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.all(8), // biar area klik lebih luas
+                        child: SvgPicture.asset(
+                          "assets/icons/edit.svg",
+                          width: 24,
+                          height: 24,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                  ],
                 ),
-              
+              ),
             ),
           ),
 
           //card 2
           Padding(
-            padding: EdgeInsets.only(top: 13, left: 10, right: 10),
+            padding: EdgeInsets.only(top: 9, left: 10, right: 10),
             child: Card(
               elevation: 2,
               color: Colors.white,
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 80,
-                  child: Row(
-                    children: [
-                      Card(
-                        color: Color(0xffFFB02E),
-                        child: SizedBox(
-                          width: 60,
-                          height: 60,
-                          child: Center(
-                            child: SvgPicture.asset(
-                              "assets/icons/kategoriproduk.svg",
-                              width: 39,
-                              height: 39,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 20),
-                      Text(
-                        "Ayam Pejantan",
-                        style: TextStyle(
-                          fontFamily: "Second",
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Spacer(),
-                      InkWell(
-                        onTap: () {
-                          print("Icon edit diklik!");
-                        },
-                        child: Padding(
-                          padding: EdgeInsets.all(
-                            8,
-                          ), // biar area klik lebih luas
+              child: SizedBox(
+                width: double.infinity,
+                height: 80,
+                child: Row(
+                  children: [
+                    Card(
+                      color: Color(0xffFFB02E),
+                      child: SizedBox(
+                        width: 60,
+                        height: 60,
+                        child: Center(
                           child: SvgPicture.asset(
-                            "assets/icons/edit.svg",
-                            width: 24,
-                            height: 24,
+                            "assets/icons/kategoriproduk.svg",
+                            width: 39,
+                            height: 39,
                           ),
                         ),
                       ),
-                      SizedBox(width: 10),
-                    ],
-                  ),
+                    ),
+                    SizedBox(width: 20),
+                    Text(
+                      "Ayam Pejantan",
+                      style: TextStyle(
+                        fontFamily: "Second",
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Spacer(),
+                    InkWell(
+                      onTap: () {
+                        Get.toNamed(AppRoutes.TambahKategori);
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.all(8), // biar area klik lebih luas
+                        child: SvgPicture.asset(
+                          "assets/icons/edit.svg",
+                          width: 24,
+                          height: 24,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                  ],
                 ),
-              
+              ),
             ),
           ),
         ],
@@ -195,7 +192,7 @@ class TambahkategoriProduk extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.orange,
         onPressed: () {
-          print("Tambah kategori diklik!");
+          Get.toNamed(AppRoutes.TambahKategori);
         },
         child: Icon(Icons.add, color: Colors.white),
       ),
