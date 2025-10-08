@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:get/utils.dart';
+import 'package:my_app/controller/category_controller.dart';
 import 'package:my_app/routes/app_routes.dart';
 
 class TambahkategoriProduk extends StatelessWidget {
@@ -69,125 +70,96 @@ class TambahkategoriProduk extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.only(top: 17, left: 20),
+            padding: const EdgeInsets.only(top: 17, left: 20),
             child: Text(
               "Kategori",
-              style: TextStyle(
+              style: const TextStyle(
                 fontFamily: "Primary",
                 fontWeight: FontWeight.w500,
                 color: Colors.black,
               ),
             ),
           ),
-          //card 1
-          Padding(
-            padding: EdgeInsets.only(top: 13, left: 10, right: 10),
-            child: Card(
-              elevation: 2,
-              color: Colors.white,
-              child: SizedBox(
-                width: double.infinity,
-                height: 80,
-                child: Row(
-                  children: [
-                    Card(
-                      color: Color(0xffFFB02E),
-                      child: SizedBox(
-                        width: 60,
-                        height: 60,
-                        child: Center(
-                          child: SvgPicture.asset(
-                            "assets/icons/kategoriproduk.svg",
-                            width: 39,
-                            height: 39,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 20),
-                    Text(
-                      "Ayam Broiler",
-                      style: TextStyle(
-                        fontFamily: "Second",
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Spacer(),
-                    InkWell(
-                      onTap: () {
-                        Get.toNamed(AppRoutes.TambahKategori);
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.all(8), // biar area klik lebih luas
-                        child: SvgPicture.asset(
-                          "assets/icons/edit.svg",
-                          width: 24,
-                          height: 24,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                  ],
-                ),
-              ),
-            ),
-          ),
 
-          //card 2
-          Padding(
-            padding: EdgeInsets.only(top: 9, left: 10, right: 10),
-            child: Card(
-              elevation: 2,
-              color: Colors.white,
-              child: SizedBox(
-                width: double.infinity,
-                height: 80,
-                child: Row(
-                  children: [
-                    Card(
-                      color: Color(0xffFFB02E),
-                      child: SizedBox(
-                        width: 60,
-                        height: 60,
-                        child: Center(
-                          child: SvgPicture.asset(
-                            "assets/icons/kategoriproduk.svg",
-                            width: 39,
-                            height: 39,
+          const SizedBox(height: 10),
+
+          //Bagian List dinamis pakai Expanded agar scrollable
+          Expanded(
+            child: GetX<CategoryController>(
+              init: CategoryController(),
+              builder: (controller) {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (controller.categories.isEmpty) {
+                  return const Center(child: Text("Tidak ada kategori"));
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  itemCount: controller.categories.length,
+                  itemBuilder: (context, index) {
+                    final category = controller.categories[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Card(
+                        elevation: 2,
+                        color: Colors.white,
+                        child: SizedBox(
+                          height: 80,
+                          child: Row(
+                            children: [
+                              Card(
+                                color: const Color(0xffFFB02E),
+                                child: SizedBox(
+                                  width: 60,
+                                  height: 60,
+                                  child: Center(
+                                    child: SvgPicture.asset(
+                                      "assets/icons/kategoriproduk.svg",
+                                      width: 39,
+                                      height: 39,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              Text(
+                                category.name,
+                                style: const TextStyle(
+                                  fontFamily: "Second",
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Spacer(),
+                              InkWell(
+                                onTap: () {
+                                  // aksi edit kategori
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: SvgPicture.asset(
+                                    "assets/icons/edit.svg",
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                            ],
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: 20),
-                    Text(
-                      "Ayam Pejantan",
-                      style: TextStyle(
-                        fontFamily: "Second",
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Spacer(),
-                    InkWell(
-                      onTap: () {
-                        Get.toNamed(AppRoutes.TambahKategori);
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.all(8), // biar area klik lebih luas
-                        child: SvgPicture.asset(
-                          "assets/icons/edit.svg",
-                          width: 24,
-                          height: 24,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                  ],
-                ),
-              ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
       ),
+
       // Tambahkan FAB di bawah kanan
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.orange,
