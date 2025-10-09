@@ -5,7 +5,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
 import 'package:my_app/screens/admin/produk/DataProduk.dart';
-import 'package:my_app/screens/admin/produk/TambahKategoriProduk.dart';
+import 'package:my_app/screens/admin/produk/DaftarKategoriProduk.dart';
 import 'package:my_app/screens/admin/produk/TambahProduk.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:get/get.dart';

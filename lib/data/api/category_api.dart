@@ -47,4 +47,24 @@ class CategoryApi {
       throw Exception('Gagal menambahkan kategori (${response.statusCode})');
     }
   }
+
+  // edit kategori
+  static Future<Map<String, dynamic>> updateCategory({
+    required int id,
+    required String name,
+    required String description,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/categories/$id'),
+      headers: _headers,
+      body: jsonEncode({"name": name, "description": description}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      print("Gagal update kategori: ${response.body}");
+      throw Exception('Gagal update kategori (${response.statusCode})');
+    }
+  }
 }

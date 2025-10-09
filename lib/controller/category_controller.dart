@@ -32,7 +32,29 @@ class CategoryController extends GetxController {
       isLoading.value = true;
       final newCategory = await _repository.addCategory(name, description);
       categories.add(newCategory);
-      Get.snackbar("Sukses", "Kategori '$name' berhasil ditambahkan");
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // update kategori
+  Future<void> updateCategory(int id, String name, String description) async {
+    try {
+      isLoading.value = true;
+      final updatedCategory = await _repository.updateCategory(
+        id,
+        name,
+        description,
+      );
+
+      // Update item di list lokal
+      final index = categories.indexWhere((c) => c.id == id);
+      if (index != -1) {
+        categories[index] = updatedCategory;
+        categories.refresh(); // penting agar UI auto rebuild
+      }
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {

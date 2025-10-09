@@ -6,6 +6,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:my_app/controller/category_controller.dart';
 import 'package:my_app/data/api/category_api.dart';
+import 'package:my_app/data/models/category_model.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'dart:io';
@@ -13,8 +14,16 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 class Tambahkategori extends StatefulWidget {
-  const Tambahkategori({super.key});
+  final CategoryModel? category; // null = tambah, ada = edit
+
+  const Tambahkategori({Key? key, this.category}) : super(key: key);
 
   @override
   State<Tambahkategori> createState() => _TambahkategoriState();
@@ -26,6 +35,16 @@ class _TambahkategoriState extends State<Tambahkategori> {
   File? _selectedImage;
 
   @override
+  void initState() {
+    super.initState();
+    // Kalau mode edit, isi field dengan data kategori
+    if (widget.category != null) {
+      _namaController.text = widget.category!.name;
+      _deskripsiController.text = widget.category!.description ?? '';
+    }
+  }
+
+  @override
   void dispose() {
     _namaController.dispose();
     _deskripsiController.dispose();
@@ -33,9 +52,8 @@ class _TambahkategoriState extends State<Tambahkategori> {
   }
 
   Future<void> _pickImage() async {
-    var status = await Permission.photos.request(); // iOS & Android 13
-    var storageStatus = await Permission.storage
-        .request(); // Android 12 ke bawah
+    var status = await Permission.photos.request();
+    var storageStatus = await Permission.storage.request();
 
     if (status.isGranted || storageStatus.isGranted) {
       final ImagePicker picker = ImagePicker();
@@ -55,31 +73,64 @@ class _TambahkategoriState extends State<Tambahkategori> {
     }
   }
 
-  void _submitForm() async {
+  Future<void> _submitForm() async {
     final nama = _namaController.text.trim();
     final deskripsi = _deskripsiController.text.trim();
 
     if (nama.isEmpty || deskripsi.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Nama dan deskripsi wajib diisi")),
+      Get.snackbar(
+        "Validasi Gagal",
+        "Nama dan deskripsi wajib diisi",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 10,
       );
       return;
     }
 
-    print('🚀 Kirim kategori: $nama - $deskripsi');
+    final controller = Get.find<CategoryController>();
 
     try {
-      // Gunakan controller langsung
-      final controller = Get.find<CategoryController>();
-      await controller.addCategory(nama, deskripsi);
+      if (widget.category == null) {
+        // Tambah kategori
+        await controller.addCategory(nama, deskripsi);
+        Get.snackbar(
+          "Sukses",
+          "Kategori '$nama' berhasil ditambahkan",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 10,
+        );
+      } else {
+        // 🟡 Edit kategori
+        await controller.updateCategory(widget.category!.id, nama, deskripsi);
+        Get.snackbar(
+          "Sukses",
+          "Kategori '$nama' berhasil diperbarui",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.blue,
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 10,
+        );
+      }
 
       _resetForm();
-      Navigator.pop(context); // Balik ke halaman kategori
+      Navigator.pop(context); // balik ke halaman kategori
     } catch (e) {
-      print('Error tambah kategori: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Gagal menambahkan kategori: $e")));
+      Get.snackbar(
+        "Error",
+        "Terjadi kesalahan: $e",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 10,
+      );
     }
   }
 
@@ -93,55 +144,21 @@ class _TambahkategoriState extends State<Tambahkategori> {
 
   @override
   Widget build(BuildContext context) {
+    final isEdit = widget.category != null;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Row(
-          children: [
-            const CircleAvatar(
-              radius: 20,
-              backgroundImage: AssetImage("assets/images/image.png"),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  "Selamat Malam",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 9,
-                    fontFamily: "Primary",
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                Text(
-                  "Admin RPA",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 9,
-                    fontFamily: "Primary",
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.mail, color: Colors.white),
-              style: IconButton.styleFrom(
-                backgroundColor: const Color(0xffF26D2B),
-                shape: const CircleBorder(),
-              ),
-            ),
+        title: Text(
+          isEdit ? "Edit Kategori" : "Tambah Kategori",
+          style: const TextStyle(
+            color: Colors.black,
+            fontFamily: "Primary",
+            fontWeight: FontWeight.w600,
           ),
-        ],
+        ),
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -151,8 +168,8 @@ class _TambahkategoriState extends State<Tambahkategori> {
             Padding(
               padding: const EdgeInsets.only(top: 31, left: 28),
               child: Row(
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     "Kategori",
                     style: TextStyle(
                       fontFamily: "Primary",
@@ -161,12 +178,12 @@ class _TambahkategoriState extends State<Tambahkategori> {
                       color: Colors.black,
                     ),
                   ),
-                  SizedBox(width: 3),
-                  Icon(Icons.chevron_right, color: Colors.grey),
-                  SizedBox(width: 3),
+                  const SizedBox(width: 3),
+                  const Icon(Icons.chevron_right, color: Colors.grey),
+                  const SizedBox(width: 3),
                   Text(
-                    "Buat",
-                    style: TextStyle(
+                    isEdit ? "Edit" : "Buat",
+                    style: const TextStyle(
                       fontFamily: "Primary",
                       fontWeight: FontWeight.w500,
                       fontSize: 14,
@@ -252,155 +269,70 @@ class _TambahkategoriState extends State<Tambahkategori> {
               ),
             ),
 
-            // Gambar
-            const Padding(
-              padding: EdgeInsets.only(top: 20, left: 28),
-              child: Text(
-                "Gambar",
-                style: TextStyle(
-                  fontFamily: "Primary",
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                  color: Colors.black,
-                ),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  // SizedBox(
-                  //   width: 183,
-                  //   child: ElevatedButton(
-                  //     onPressed: _pickImage,
-                  //     style: ElevatedButton.styleFrom(
-                  //       backgroundColor: const Color(0xffEE6C22),
-                  //       padding: const EdgeInsets.symmetric(vertical: 14),
-                  //       shape: RoundedRectangleBorder(
-                  //         borderRadius: BorderRadius.circular(6),
-                  //       ),
-                  //     ),
-                  //     child: const Text(
-                  //       "Tambahkan gambar",
-                  //       style: TextStyle(
-                  //         color: Colors.white,
-                  //         fontSize: 16,
-                  //         fontWeight: FontWeight.w500,
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
-
-                  // Preview
-                  // if (_selectedImage != null) ...[
-                  //   const SizedBox(height: 12),
-                  //   Stack(
-                  //     children: [
-                  //       SizedBox(
-                  //         width: 120,
-                  //         height: 120,
-                  //         child: ClipRRect(
-                  //           borderRadius: BorderRadius.circular(8),
-                  //           child: Image.file(
-                  //             _selectedImage!,
-                  //             fit: BoxFit.cover,
-                  //           ),
-                  //         ),
-                  //       ),
-                  //       Positioned(
-                  //         top: 4,
-                  //         right: 4,
-                  //         child: GestureDetector(
-                  //           onTap: () {
-                  //             setState(() {
-                  //               _selectedImage = null;
-                  //             });
-                  //           },
-                  //           child: Container(
-                  //             decoration: const BoxDecoration(
-                  //               color: Colors.black54,
-                  //               shape: BoxShape.circle,
-                  //             ),
-                  //             padding: const EdgeInsets.all(4),
-                  //             child: const Icon(
-                  //               Icons.close,
-                  //               color: Colors.white,
-                  //               size: 18,
-                  //             ),
-                  //           ),
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ],
-
-                  // Tombol Buat & Batal
-                  Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 41),
-                        child: SizedBox(
-                          width: 79,
-                          child: ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                const Color(0xffEE9400),
+                  // Tombol Buat / Simpan
+                  Padding(
+                    padding: const EdgeInsets.only(top: 41),
+                    child: SizedBox(
+                      width: 100,
+                      child: ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                            const Color(0xffEE9400),
+                          ),
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
-                              shape:
-                                  MaterialStateProperty.all<
-                                    RoundedRectangleBorder
-                                  >(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                            ),
-                            onPressed: _submitForm,
-                            child: const Text(
-                              "Buat",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontFamily: "Primary",
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
+                        ),
+                        onPressed: _submitForm,
+                        child: Text(
+                          isEdit ? "Simpan" : "Buat",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontFamily: "Primary",
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 41, left: 10),
-                        child: SizedBox(
-                          width: 80,
-                          child: ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                const Color(0xffFFFFFF),
+                    ),
+                  ),
+
+                  // Tombol Batal
+                  Padding(
+                    padding: const EdgeInsets.only(top: 41, left: 10),
+                    child: SizedBox(
+                      width: 80,
+                      child: ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                            const Color(0xffFFFFFF),
+                          ),
+                          shape:
+                              MaterialStateProperty.all<RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
-                              shape:
-                                  MaterialStateProperty.all<
-                                    RoundedRectangleBorder
-                                  >(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                            ),
-                            onPressed: _resetForm,
-                            child: const Text(
-                              "Batal",
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontFamily: "Primary",
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
-                            ),
+                        ),
+                        onPressed: _resetForm,
+                        child: const Text(
+                          "Batal",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontFamily: "Primary",
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),

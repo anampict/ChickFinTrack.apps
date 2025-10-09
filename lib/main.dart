@@ -9,7 +9,7 @@ import 'package:my_app/screens/SplashScreen.dart';
 import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
 import 'package:my_app/screens/admin/produk/DataProduk.dart';
 import 'package:my_app/screens/admin/produk/TambahKategori.dart';
-import 'package:my_app/screens/admin/produk/TambahKategoriProduk.dart';
+import 'package:my_app/screens/admin/produk/DaftarKategoriProduk.dart';
 import 'package:my_app/screens/admin/produk/TambahProduk.dart';
 import 'package:my_app/screens/admin/profile/AdminProfile.dart';
 import 'package:get/get.dart';

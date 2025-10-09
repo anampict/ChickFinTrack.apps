@@ -18,4 +18,20 @@ class CategoryRepository {
     final data = response['data'];
     return CategoryModel.fromJson({...data, 'products_count': 0});
   }
+
+  // edit kategori
+  Future<CategoryModel> updateCategory(
+    int id,
+    String name,
+    String description,
+  ) async {
+    final response = await CategoryApi.updateCategory(
+      id: id,
+      name: name,
+      description: description,
+    );
+
+    final data = response['data'];
+    return CategoryModel.fromJson({...data, 'products_count': 0});
+  }
 }

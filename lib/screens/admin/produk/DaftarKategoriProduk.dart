@@ -4,9 +4,10 @@ import 'package:get/get.dart';
 import 'package:get/utils.dart';
 import 'package:my_app/controller/category_controller.dart';
 import 'package:my_app/routes/app_routes.dart';
+import 'package:my_app/screens/admin/produk/TambahKategori.dart';
 
-class TambahkategoriProduk extends StatelessWidget {
-  const TambahkategoriProduk({super.key});
+class Daftarkategoriproduk extends StatelessWidget {
+  const Daftarkategoriproduk({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +137,12 @@ class TambahkategoriProduk extends StatelessWidget {
                                 const Spacer(),
                                 InkWell(
                                   onTap: () {
-                                    // aksi edit atau delete
+                                    Get.to(
+                                      () => Tambahkategori(
+                                        category:
+                                            category, // kirim data ke form edit
+                                      ),
+                                    );
                                   },
                                   child: Padding(
                                     padding: const EdgeInsets.all(8),

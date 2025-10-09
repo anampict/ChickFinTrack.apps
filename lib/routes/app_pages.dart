@@ -4,7 +4,7 @@ import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
 import 'package:my_app/screens/admin/produk/DataProduk.dart';
 import 'package:my_app/screens/admin/produk/TambahKategori.dart';
-import 'package:my_app/screens/admin/produk/TambahKategoriProduk.dart';
+import 'package:my_app/screens/admin/produk/DaftarKategoriProduk.dart';
 import 'package:my_app/screens/admin/produk/TambahProduk.dart';
 
 class AppPages {
@@ -13,7 +13,7 @@ class AppPages {
     //tambahkategori
     GetPage(
       name: AppRoutes.KategoriProduk,
-      page: () => const TambahkategoriProduk(),
+      page: () => const Daftarkategoriproduk(),
     ),
     //dataproduk
     GetPage(name: AppRoutes.DataProduk, page: () => const Dataproduk()),
