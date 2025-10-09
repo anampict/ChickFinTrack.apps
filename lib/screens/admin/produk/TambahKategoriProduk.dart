@@ -86,7 +86,6 @@ class TambahkategoriProduk extends StatelessWidget {
           //Bagian List dinamis pakai Expanded agar scrollable
           Expanded(
             child: GetX<CategoryController>(
-              init: CategoryController(),
               builder: (controller) {
                 if (controller.isLoading.value) {
                   return const Center(child: CircularProgressIndicator());
@@ -96,63 +95,66 @@ class TambahkategoriProduk extends StatelessWidget {
                   return const Center(child: Text("Tidak ada kategori"));
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  itemCount: controller.categories.length,
-                  itemBuilder: (context, index) {
-                    final category = controller.categories[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Card(
-                        elevation: 2,
-                        color: Colors.white,
-                        child: SizedBox(
-                          height: 80,
-                          child: Row(
-                            children: [
-                              Card(
-                                color: const Color(0xffFFB02E),
-                                child: SizedBox(
-                                  width: 60,
-                                  height: 60,
-                                  child: Center(
-                                    child: SvgPicture.asset(
-                                      "assets/icons/kategoriproduk.svg",
-                                      width: 39,
-                                      height: 39,
+                return RefreshIndicator(
+                  onRefresh: controller.fetchCategories, // 🌀 refresh data
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    itemCount: controller.categories.length,
+                    itemBuilder: (context, index) {
+                      final category = controller.categories[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Card(
+                          elevation: 2,
+                          color: Colors.white,
+                          child: SizedBox(
+                            height: 80,
+                            child: Row(
+                              children: [
+                                Card(
+                                  color: const Color(0xffFFB02E),
+                                  child: SizedBox(
+                                    width: 60,
+                                    height: 60,
+                                    child: Center(
+                                      child: SvgPicture.asset(
+                                        "assets/icons/kategoriproduk.svg",
+                                        width: 39,
+                                        height: 39,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 20),
-                              Text(
-                                category.name,
-                                style: const TextStyle(
-                                  fontFamily: "Second",
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const Spacer(),
-                              InkWell(
-                                onTap: () {
-                                  // aksi edit kategori
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8),
-                                  child: SvgPicture.asset(
-                                    "assets/icons/edit.svg",
-                                    width: 24,
-                                    height: 24,
+                                const SizedBox(width: 20),
+                                Text(
+                                  category.name,
+                                  style: const TextStyle(
+                                    fontFamily: "Second",
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                            ],
+                                const Spacer(),
+                                InkWell(
+                                  onTap: () {
+                                    // aksi edit atau delete
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: SvgPicture.asset(
+                                      "assets/icons/edit.svg",
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 );
               },
             ),

@@ -11,7 +11,7 @@ class CategoryApi {
     'Accept': 'application/json',
     'Authorization': 'Bearer $token',
   };
-
+  //get kategori
   static Future<List<dynamic>> getCategories() async {
     final response = await http.get(
       Uri.parse('$baseUrl/categories'),
@@ -25,6 +25,26 @@ class CategoryApi {
       throw Exception(
         'Gagal ambil kategori: ${response.statusCode} - ${response.body}',
       );
+    }
+  }
+
+  //tambah kategori
+  static Future<Map<String, dynamic>> addCategory({
+    required String name,
+    required String description,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/categories'),
+      headers: _headers,
+      body: jsonEncode({"name": name, "description": description}),
+    );
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      // responsenya kemungkinan object kategori baru
+      return jsonDecode(response.body);
+    } else {
+      print("Gagal menambahkan kategori: ${response.body}");
+      throw Exception('Gagal menambahkan kategori (${response.statusCode})');
     }
   }
 }

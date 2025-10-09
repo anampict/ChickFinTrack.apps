@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:my_app/controller/category_controller.dart';
+import 'package:my_app/data/api/category_api.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -12,10 +21,18 @@ class Tambahkategori extends StatefulWidget {
 }
 
 class _TambahkategoriState extends State<Tambahkategori> {
+  final TextEditingController _namaController = TextEditingController();
+  final TextEditingController _deskripsiController = TextEditingController();
   File? _selectedImage;
 
+  @override
+  void dispose() {
+    _namaController.dispose();
+    _deskripsiController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImage() async {
-    // Minta izin akses media dulu
     var status = await Permission.photos.request(); // iOS & Android 13
     var storageStatus = await Permission.storage
         .request(); // Android 12 ke bawah
@@ -30,13 +47,48 @@ class _TambahkategoriState extends State<Tambahkategori> {
         });
       }
     } else {
-      // Jika izin ditolak
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Izin galeri diperlukan untuk memilih gambar"),
         ),
       );
     }
+  }
+
+  void _submitForm() async {
+    final nama = _namaController.text.trim();
+    final deskripsi = _deskripsiController.text.trim();
+
+    if (nama.isEmpty || deskripsi.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Nama dan deskripsi wajib diisi")),
+      );
+      return;
+    }
+
+    print('🚀 Kirim kategori: $nama - $deskripsi');
+
+    try {
+      // Gunakan controller langsung
+      final controller = Get.find<CategoryController>();
+      await controller.addCategory(nama, deskripsi);
+
+      _resetForm();
+      Navigator.pop(context); // Balik ke halaman kategori
+    } catch (e) {
+      print('Error tambah kategori: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Gagal menambahkan kategori: $e")));
+    }
+  }
+
+  void _resetForm() {
+    _namaController.clear();
+    _deskripsiController.clear();
+    setState(() {
+      _selectedImage = null;
+    });
   }
 
   @override
@@ -92,10 +144,10 @@ class _TambahkategoriState extends State<Tambahkategori> {
         ],
       ),
       body: SingleChildScrollView(
-        // Supaya bisa scroll kalau layar kecil
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Breadcrumb
             Padding(
               padding: const EdgeInsets.only(top: 31, left: 28),
               child: Row(
@@ -124,6 +176,8 @@ class _TambahkategoriState extends State<Tambahkategori> {
                 ],
               ),
             ),
+
+            // Nama Kategori
             const Padding(
               padding: EdgeInsets.only(left: 28, top: 31),
               child: Text(
@@ -137,11 +191,12 @@ class _TambahkategoriState extends State<Tambahkategori> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(left: 28, right: 28, top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
               child: Material(
                 elevation: 4,
                 borderRadius: BorderRadius.circular(5),
                 child: TextField(
+                  controller: _namaController,
                   decoration: InputDecoration(
                     hintText: "Masukkan nama kategori",
                     filled: true,
@@ -158,6 +213,8 @@ class _TambahkategoriState extends State<Tambahkategori> {
                 ),
               ),
             ),
+
+            // Deskripsi
             const Padding(
               padding: EdgeInsets.only(top: 20, left: 28),
               child: Text(
@@ -171,13 +228,14 @@ class _TambahkategoriState extends State<Tambahkategori> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(left: 28, right: 28, top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
               child: Material(
                 elevation: 4,
                 borderRadius: BorderRadius.circular(5),
                 child: SizedBox(
                   height: 114,
                   child: TextField(
+                    controller: _deskripsiController,
                     decoration: InputDecoration(
                       hintText: "Masukkan deskripsi kategori",
                       filled: true,
@@ -193,6 +251,8 @@ class _TambahkategoriState extends State<Tambahkategori> {
                 ),
               ),
             ),
+
+            // Gambar
             const Padding(
               padding: EdgeInsets.only(top: 20, left: 28),
               child: Text(
@@ -205,82 +265,81 @@ class _TambahkategoriState extends State<Tambahkategori> {
                 ),
               ),
             ),
-
-            // Tombol + preview gambar
             Padding(
               padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: 183,
-                    child: ElevatedButton(
-                      onPressed: _pickImage,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xffEE6C22),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                      child: const Text(
-                        "Tambahkan gambar",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
+                  // SizedBox(
+                  //   width: 183,
+                  //   child: ElevatedButton(
+                  //     onPressed: _pickImage,
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: const Color(0xffEE6C22),
+                  //       padding: const EdgeInsets.symmetric(vertical: 14),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(6),
+                  //       ),
+                  //     ),
+                  //     child: const Text(
+                  //       "Tambahkan gambar",
+                  //       style: TextStyle(
+                  //         color: Colors.white,
+                  //         fontSize: 16,
+                  //         fontWeight: FontWeight.w500,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
 
-                  if (_selectedImage != null) ...[
-                    const SizedBox(height: 12),
-                    Stack(
-                      children: [
-                        // ✅ Bungkus dengan SizedBox supaya ukuran fix
-                        SizedBox(
-                          width: 120,
-                          height: 120,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              _selectedImage!,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedImage = null;
-                              });
-                            },
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                color: Colors.black54,
-                                shape: BoxShape.circle,
-                              ),
-                              padding: const EdgeInsets.all(4),
-                              child: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  // Preview
+                  // if (_selectedImage != null) ...[
+                  //   const SizedBox(height: 12),
+                  //   Stack(
+                  //     children: [
+                  //       SizedBox(
+                  //         width: 120,
+                  //         height: 120,
+                  //         child: ClipRRect(
+                  //           borderRadius: BorderRadius.circular(8),
+                  //           child: Image.file(
+                  //             _selectedImage!,
+                  //             fit: BoxFit.cover,
+                  //           ),
+                  //         ),
+                  //       ),
+                  //       Positioned(
+                  //         top: 4,
+                  //         right: 4,
+                  //         child: GestureDetector(
+                  //           onTap: () {
+                  //             setState(() {
+                  //               _selectedImage = null;
+                  //             });
+                  //           },
+                  //           child: Container(
+                  //             decoration: const BoxDecoration(
+                  //               color: Colors.black54,
+                  //               shape: BoxShape.circle,
+                  //             ),
+                  //             padding: const EdgeInsets.all(4),
+                  //             child: const Icon(
+                  //               Icons.close,
+                  //               color: Colors.white,
+                  //               size: 18,
+                  //             ),
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ],
 
+                  // Tombol Buat & Batal
                   Row(
                     children: [
                       Padding(
-                        padding: EdgeInsets.only(top: 41),
+                        padding: const EdgeInsets.only(top: 41),
                         child: SizedBox(
                           width: 79,
                           child: ElevatedButton(
@@ -297,7 +356,7 @@ class _TambahkategoriState extends State<Tambahkategori> {
                                     ),
                                   ),
                             ),
-                            onPressed: () {},
+                            onPressed: _submitForm,
                             child: const Text(
                               "Buat",
                               style: TextStyle(
@@ -311,7 +370,7 @@ class _TambahkategoriState extends State<Tambahkategori> {
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.only(top: 41, left: 10),
+                        padding: const EdgeInsets.only(top: 41, left: 10),
                         child: SizedBox(
                           width: 80,
                           child: ElevatedButton(
@@ -328,7 +387,7 @@ class _TambahkategoriState extends State<Tambahkategori> {
                                     ),
                                   ),
                             ),
-                            onPressed: () {},
+                            onPressed: _resetForm,
                             child: const Text(
                               "Batal",
                               style: TextStyle(

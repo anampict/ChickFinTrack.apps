@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/component/Menu2.dart';
+import 'package:my_app/controller/category_controller.dart';
 import 'package:my_app/navigation/MainNavigation.dart';
 import 'package:my_app/routes/app_pages.dart';
 import 'package:my_app/routes/app_routes.dart';
@@ -14,6 +15,7 @@ import 'package:my_app/screens/admin/profile/AdminProfile.dart';
 import 'package:get/get.dart';
 
 void main() {
+  Get.put(CategoryController());
   runApp(const MyApp());
 }
 
