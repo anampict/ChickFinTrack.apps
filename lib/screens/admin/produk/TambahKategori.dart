@@ -249,6 +249,7 @@ class _TambahkategoriState extends State<Tambahkategori> {
               child: Material(
                 elevation: 4,
                 borderRadius: BorderRadius.circular(5),
+                color: Colors.white,
                 child: SizedBox(
                   height: 114,
                   child: TextField(

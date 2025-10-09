@@ -3,11 +3,77 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:get/utils.dart';
 import 'package:my_app/controller/category_controller.dart';
+import 'package:my_app/data/models/category_model.dart';
 import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/admin/produk/TambahKategori.dart';
 
 class Daftarkategoriproduk extends StatelessWidget {
   const Daftarkategoriproduk({super.key});
+
+  void _hapusKategori(CategoryModel category) {
+    Get.defaultDialog(
+      title: "Hapus Kategori",
+      middleText: "Apakah kamu yakin ingin menghapus '${category.name}'?",
+      confirm: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.redAccent,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: () async {
+          final controller = Get.find<CategoryController>();
+
+          Get.back();
+          Get.dialog(
+            const Center(child: CircularProgressIndicator()),
+            barrierDismissible: false,
+          );
+
+          try {
+            await controller.deleteCategory(category.id);
+
+            // Tutup loading
+            Get.back();
+
+            // Snackbar sukses
+            Get.snackbar(
+              "Sukses",
+              "Kategori '${category.name}' berhasil dihapus",
+              snackPosition: SnackPosition.TOP,
+              backgroundColor: Colors.green,
+              colorText: Colors.white,
+              margin: const EdgeInsets.all(12),
+              borderRadius: 10,
+            );
+          } catch (e) {
+            // Tutup loading jika error
+            Get.back();
+
+            Get.snackbar(
+              "Gagal",
+              "Gagal menghapus kategori: $e",
+              snackPosition: SnackPosition.TOP,
+              backgroundColor: Colors.redAccent,
+              colorText: Colors.white,
+              margin: const EdgeInsets.all(12),
+              borderRadius: 10,
+            );
+          }
+        },
+        child: const Text("Hapus"),
+      ),
+      cancel: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87,
+          side: const BorderSide(color: Colors.black12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: () => Get.back(),
+        child: const Text("Batal"),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,6 +201,20 @@ class Daftarkategoriproduk extends StatelessWidget {
                                   ),
                                 ),
                                 const Spacer(),
+                                InkWell(
+                                  onTap: () {
+                                    _hapusKategori(category);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: SvgPicture.asset(
+                                      "assets/icons/hapus.svg",
+                                      width: 20,
+                                      height: 20,
+                                    ),
+                                  ),
+                                ),
+
                                 InkWell(
                                   onTap: () {
                                     Get.to(

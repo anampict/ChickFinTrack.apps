@@ -34,4 +34,9 @@ class CategoryRepository {
     final data = response['data'];
     return CategoryModel.fromJson({...data, 'products_count': 0});
   }
+
+  // hapus kategori
+  Future<void> deleteCategory(int id) async {
+    await CategoryApi.deleteCategory(id);
+  }
 }

@@ -67,4 +67,17 @@ class CategoryApi {
       throw Exception('Gagal update kategori (${response.statusCode})');
     }
   }
+
+  // delete kategori
+  static Future<void> deleteCategory(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/categories/$id'),
+      headers: _headers,
+    );
+
+    if (response.statusCode != 200) {
+      print("Gagal delete kategori: ${response.body}");
+      throw Exception('Gagal delete kategori (${response.statusCode})');
+    }
+  }
 }

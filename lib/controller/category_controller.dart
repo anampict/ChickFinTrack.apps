@@ -61,4 +61,19 @@ class CategoryController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  // delete kategori
+  Future<void> deleteCategory(int id) async {
+    try {
+      // isLoading.value = true;
+      await _repository.deleteCategory(id);
+
+      // Hapus dari list lokal
+      categories.removeWhere((c) => c.id == id);
+    } catch (e) {
+      rethrow; // biar error bisa ditangani di UI
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }
