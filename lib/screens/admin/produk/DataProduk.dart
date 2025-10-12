@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:my_app/controller/product_controller.dart';
 import 'package:my_app/data/repositories/product_repository.dart';
+import 'package:my_app/helper/utils.dart';
 import 'package:my_app/routes/app_routes.dart';
 
 class Dataproduk extends StatelessWidget {
@@ -89,7 +90,7 @@ class Dataproduk extends StatelessWidget {
                 namaProduk: product.name ?? "-",
                 kategori: product.category?.name ?? "-",
                 stok: product.stock ?? 0,
-                harga: product.price?.toString() ?? "0",
+                harga: formatRupiah(product.price ?? 0),
                 isActive: product.isActive,
                 imagePath:
                     product.imageUrl ??
@@ -257,7 +258,7 @@ class CardProduk extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Rp. $harga",
+                        harga,
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
