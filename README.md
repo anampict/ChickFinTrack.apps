@@ -1,4 +1,4 @@
-# my_app
+# chickfintrack
 
 A new Flutter project.
 
