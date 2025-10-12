@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'package:my_app/controller/product_controller.dart';
+import 'package:my_app/data/repositories/product_repository.dart';
 import 'package:my_app/routes/app_routes.dart';
 
 class Dataproduk extends StatelessWidget {
@@ -9,6 +10,13 @@ class Dataproduk extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Get.put(ProductRepository());
+
+    // Inject controller + repository
+    final ProductController controller = Get.put(
+      ProductController(repository: Get.find()),
+    );
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -59,102 +67,60 @@ class Dataproduk extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.only(top: 31, left: 28),
-              child: Row(
-                children: [
-                  Text(
-                    "Data Produk",
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: "Primary",
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 4, left: 9, right: 9),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (controller.products.isEmpty) {
+          return const Center(
+            child: Text("Tidak ada produk", style: TextStyle(fontSize: 14)),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.only(bottom: 80),
+          itemCount: controller.products.length,
+          itemBuilder: (context, index) {
+            final product = controller.products[index];
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               child: CardProduk(
-                namaProduk: "Test Ayam",
-                kategori: "Ayam Pejantan",
-                stok: 30,
-                harga: "30.000",
+                namaProduk: product.name ?? "-",
+                kategori: product.category?.name ?? "-",
+                stok: product.stock ?? 0,
+                harga: product.price?.toString() ?? "0",
+                isActive: product.isActive,
                 imagePath:
-                    "assets/images/fotoproduk.png", // ganti path sesuai export figma
+                    product.imageUrl ??
+                    "assets/images/fotoproduk.png", // fallback jika null
                 onEdit: () {
-                  Get.toNamed(AppRoutes.TambahProduk);
+                  Get.toNamed(AppRoutes.TambahProduk, arguments: product);
                 },
               ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 4, left: 9, right: 9),
-              child: CardProduk(
-                namaProduk: "Test Ayam",
-                kategori: "Ayam Pejantan",
-                stok: 30,
-                harga: "30.000",
-                imagePath:
-                    "assets/images/fotoproduk.png", // ganti path sesuai export figma
-                onEdit: () {
-                  Get.toNamed(AppRoutes.TambahProduk);
-                },
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 4, left: 9, right: 9),
-              child: CardProduk(
-                namaProduk: "Test Ayam",
-                kategori: "Ayam Pejantan",
-                stok: 30,
-                harga: "30.000",
-                imagePath:
-                    "assets/images/fotoproduk.png", // ganti path sesuai export figma
-                onEdit: () {
-                  Get.toNamed(AppRoutes.TambahProduk);
-                },
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 4, left: 9, right: 9),
-              child: CardProduk(
-                namaProduk: "Test Ayam",
-                kategori: "Ayam Pejantan",
-                stok: 30,
-                harga: "30.000",
-                imagePath:
-                    "assets/images/fotoproduk.png", // ganti path sesuai export figma
-                onEdit: () {
-                  Get.toNamed(AppRoutes.TambahProduk);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-      // Tambahkan FAB di bawah kanan
+            );
+          },
+        );
+      }),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.orange,
         onPressed: () {
           Get.toNamed(AppRoutes.TambahProduk);
         },
-        child: Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
 }
 
-//card component
+// ================== CARD PRODUK ====================
 class CardProduk extends StatelessWidget {
   final String namaProduk;
   final String kategori;
   final int stok;
   final String harga;
   final String imagePath;
+  final bool isActive;
   final VoidCallback? onEdit;
 
   const CardProduk({
@@ -163,6 +129,7 @@ class CardProduk extends StatelessWidget {
     required this.kategori,
     required this.stok,
     required this.harga,
+    required this.isActive,
     required this.imagePath,
     this.onEdit,
   });
@@ -172,7 +139,6 @@ class CardProduk extends StatelessWidget {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
@@ -181,12 +147,19 @@ class CardProduk extends StatelessWidget {
             // Gambar produk
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                imagePath, // ganti dengan Image.network kalau dari URL
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-              ),
+              child: imagePath.startsWith('http')
+                  ? Image.network(
+                      imagePath,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      imagePath,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
             ),
             const SizedBox(width: 12),
 
@@ -216,10 +189,9 @@ class CardProduk extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 6),
 
-                  // Stok & kategori (pakai SVG)
+                  // Stok & Kategori
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -236,7 +208,7 @@ class CardProduk extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             SvgPicture.asset(
-                              'assets/icons/stok.svg', // ganti dengan file svg stok kamu
+                              'assets/icons/stok.svg',
                               width: 10,
                               height: 10,
                               colorFilter: const ColorFilter.mode(
@@ -266,19 +238,13 @@ class CardProduk extends StatelessWidget {
                           color: const Color(0xffF0F0F0),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(width: 4),
-                            Text(
-                              "Kategori: $kategori",
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontFamily: "Primary",
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          "Kategori: $kategori",
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontFamily: "Primary",
+                            color: Colors.black,
+                          ),
                         ),
                       ),
                     ],
@@ -291,18 +257,22 @@ class CardProduk extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Rp. ${harga.toString()}",
+                        "Rp. $harga",
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
+
                       Row(
-                        children: const [
-                          Text("Status: ", style: TextStyle(fontSize: 12)),
+                        children: [
+                          const Text(
+                            "Status: ",
+                            style: TextStyle(fontSize: 12),
+                          ),
                           Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
+                            isActive ? Icons.check_circle : Icons.cancel,
+                            color: isActive ? Colors.green : Colors.red,
                             size: 18,
                           ),
                         ],

@@ -346,31 +346,11 @@ class _TambahProdukState extends State<TambahProduk> {
                           elevation: 4,
                           borderRadius: BorderRadius.circular(5),
                           child: TextField(
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
+                            keyboardType: TextInputType.text, // ubah jadi text
+                            textCapitalization: TextCapitalization
+                                .characters, // biar otomatis kapital (opsional)
                             decoration: InputDecoration(
-                              prefixIcon: Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 12,
-                                  right: 4,
-                                  top: 14,
-                                  bottom: 14,
-                                ),
-                                child: Text(
-                                  'Rp.',
-                                  style: TextStyle(
-                                    color: Colors.grey[800],
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                              prefixIconConstraints: const BoxConstraints(
-                                minWidth: 0,
-                                minHeight: 0,
-                              ),
-                              hintText: '0',
+                              hintText: 'Masukkan kode',
                               filled: true,
                               fillColor: Colors.white,
                               border: OutlineInputBorder(
@@ -378,7 +358,7 @@ class _TambahProdukState extends State<TambahProduk> {
                                 borderSide: BorderSide.none,
                               ),
                               contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 0,
+                                horizontal: 12,
                                 vertical: 14,
                               ),
                             ),

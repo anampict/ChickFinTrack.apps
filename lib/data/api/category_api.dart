@@ -1,25 +1,18 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:my_app/data/api/api_config.dart';
 
 class CategoryApi {
-  static const String baseUrl = 'https://chickfintrack.id/api';
-  static const String token =
-      '2|OBEsReQTifb5yBvl14LbS2roCvgl5J8942vXnHmu2971a53e';
-
-  static Map<String, String> get _headers => {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'Authorization': 'Bearer $token',
-  };
   //get kategori
   static Future<List<dynamic>> getCategories() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/categories'),
-      headers: _headers,
+      Uri.parse('${ApiConfig.baseUrl}/categories'),
+      headers: ApiConfig.headers,
     );
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
+      print(response.body);
       return decoded['data'];
     } else {
       throw Exception(
@@ -34,8 +27,8 @@ class CategoryApi {
     required String description,
   }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/categories'),
-      headers: _headers,
+      Uri.parse('${ApiConfig.baseUrl}/categories'),
+      headers: ApiConfig.headers,
       body: jsonEncode({"name": name, "description": description}),
     );
 
@@ -55,8 +48,8 @@ class CategoryApi {
     required String description,
   }) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/categories/$id'),
-      headers: _headers,
+      Uri.parse('${ApiConfig.baseUrl}/categories/$id'),
+      headers: ApiConfig.headers,
       body: jsonEncode({"name": name, "description": description}),
     );
 
@@ -71,8 +64,8 @@ class CategoryApi {
   // delete kategori
   static Future<void> deleteCategory(int id) async {
     final response = await http.delete(
-      Uri.parse('$baseUrl/categories/$id'),
-      headers: _headers,
+      Uri.parse('${ApiConfig.baseUrl}/categories/$id'),
+      headers: ApiConfig.headers,
     );
 
     if (response.statusCode != 200) {
