@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:my_app/controller/category_controller.dart';
 import 'package:my_app/controller/product_controller.dart';
+import 'package:my_app/data/api/api_config.dart';
 import 'package:my_app/data/models/category_model.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -65,23 +66,51 @@ class _TambahProdukState extends State<TambahProduk> {
 
   // ================== UPLOAD IMAGE ==================
   Future<String?> _uploadImage(File file) async {
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse(
-        'https://chickfintrack.id/api/upload',
-      ), // pastikan sesuai endpoint kamu
-    );
-    request.files.add(await http.MultipartFile.fromPath('file', file.path));
-    final response = await request.send();
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('https://chickfintrack.id/api/upload/image'),
+      );
 
-    if (response.statusCode == 200) {
+      // Gunakan key yang benar 'image'
+      request.files.add(await http.MultipartFile.fromPath('image', file.path));
+
+      // Tambahkan header dari ApiConfig
+      request.headers.addAll({
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ${ApiConfig.token}',
+      });
+
+      final response = await request.send();
       final respStr = await response.stream.bytesToString();
-      final data = jsonDecode(respStr);
-      return data['url'];
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Gagal upload gambar')));
+
+      print('Upload response status: ${response.statusCode}');
+      print('Upload response body: $respStr');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final json = jsonDecode(respStr);
+        final imagePath = json['data']; // "products/xxxxx.png"
+        final fullUrl = 'https://chickfintrack.id/storage/$imagePath';
+        return fullUrl;
+      } else {
+        Get.snackbar(
+          'Error',
+          'Gagal upload gambar (${response.statusCode})',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+        return null;
+      }
+    } catch (e) {
+      print('Upload error: $e');
+      Get.snackbar(
+        'Error',
+        'Terjadi kesalahan saat upload gambar',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
       return null;
     }
   }
