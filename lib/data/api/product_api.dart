@@ -20,4 +20,24 @@ class ProductApi {
       );
     }
   }
+
+  // create product
+  static Future<Map<String, dynamic>> createProduct(
+    Map<String, dynamic> body,
+  ) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/products'),
+      headers: ApiConfig.headers,
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final decoded = jsonDecode(response.body);
+      print(' Product created: $decoded');
+      return decoded['data'];
+    } else {
+      print('Gagal create product: ${response.statusCode} - ${response.body}');
+      throw Exception('Gagal create product');
+    }
+  }
 }

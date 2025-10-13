@@ -74,33 +74,49 @@ class Dataproduk extends StatelessWidget {
         }
 
         if (controller.products.isEmpty) {
-          return const Center(
-            child: Text("Tidak ada produk", style: TextStyle(fontSize: 14)),
+          return RefreshIndicator(
+            onRefresh:
+                controller.getProducts, // ✅ tetap bisa refresh walau kosong
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 200),
+                Center(
+                  child: Text(
+                    "Tidak ada produk",
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 80),
-          itemCount: controller.products.length,
-          itemBuilder: (context, index) {
-            final product = controller.products[index];
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-              child: CardProduk(
-                namaProduk: product.name ?? "-",
-                kategori: product.category?.name ?? "-",
-                stok: product.stock ?? 0,
-                harga: formatRupiah(product.price ?? 0),
-                isActive: product.isActive,
-                imagePath:
-                    product.imageUrl ??
-                    "assets/images/fotoproduk.png", // fallback jika null
-                onEdit: () {
-                  Get.toNamed(AppRoutes.TambahProduk, arguments: product);
-                },
-              ),
-            );
-          },
+        return RefreshIndicator(
+          onRefresh: controller.getProducts, // ✅ fungsi refresh panggil API
+          child: ListView.builder(
+            padding: const EdgeInsets.only(bottom: 80),
+            itemCount: controller.products.length,
+            itemBuilder: (context, index) {
+              final product = controller.products[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                child: CardProduk(
+                  namaProduk: product.name,
+                  kategori: product.category?.name ?? "-",
+                  stok: product.stock,
+                  harga: formatRupiah(product.price),
+                  isActive: product.isActive,
+                  imagePath:
+                      product.imageUrl ??
+                      "assets/images/fotoproduk.png", // fallback jika null
+                  onEdit: () {
+                    Get.toNamed(AppRoutes.TambahProduk, arguments: product);
+                  },
+                ),
+              );
+            },
+          ),
         );
       }),
       floatingActionButton: FloatingActionButton(

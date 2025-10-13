@@ -1,8 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:my_app/controller/category_controller.dart';
+import 'package:my_app/controller/product_controller.dart';
+import 'package:my_app/data/models/category_model.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class TambahProduk extends StatefulWidget {
@@ -13,17 +19,31 @@ class TambahProduk extends StatefulWidget {
 }
 
 class _TambahProdukState extends State<TambahProduk> {
-  //Variabel untuk menyimpan state input
-  String? selectedCategory;
-  bool isActive = false;
-  File? _selectedImage; // untuk menyimpan gambar yang dipilih
+  // Controller untuk semua field
+  final _nameController = TextEditingController();
+  final _descController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _stockController = TextEditingController();
+  final _skuController = TextEditingController();
+  final _weightController = TextEditingController();
 
-  // ================== FUNGSI PICK IMAGE ==================
+  bool isActive = false;
+  File? _selectedImage;
+  CategoryModel? selectedCategory;
+
+  final categoryController = Get.find<CategoryController>();
+  final productController = Get.find<ProductController>();
+
+  @override
+  void initState() {
+    super.initState();
+    categoryController.fetchCategories();
+  }
+
+  // ================== PICK IMAGE ==================
   Future<void> _pickImage() async {
-    // Minta izin akses media
-    var status = await Permission.photos.request(); // iOS & Android 13
-    var storageStatus = await Permission.storage
-        .request(); // Android 12 ke bawah
+    var status = await Permission.photos.request();
+    var storageStatus = await Permission.storage.request();
 
     if (status.isGranted || storageStatus.isGranted) {
       final ImagePicker picker = ImagePicker();
@@ -35,11 +55,98 @@ class _TambahProdukState extends State<TambahProduk> {
         });
       }
     } else {
-      // Jika izin ditolak
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Izin galeri diperlukan untuk memilih gambar"),
         ),
+      );
+    }
+  }
+
+  // ================== UPLOAD IMAGE ==================
+  Future<String?> _uploadImage(File file) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse(
+        'https://chickfintrack.id/api/upload',
+      ), // pastikan sesuai endpoint kamu
+    );
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final respStr = await response.stream.bytesToString();
+      final data = jsonDecode(respStr);
+      return data['url'];
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gagal upload gambar')));
+      return null;
+    }
+  }
+
+  //================== SUBMIT PRODUCT ==================
+  Future<void> _submitProduct() async {
+    if (_nameController.text.isEmpty ||
+        _priceController.text.isEmpty ||
+        _stockController.text.isEmpty ||
+        _skuController.text.isEmpty ||
+        selectedCategory == null) {
+      Get.snackbar(
+        'Peringatan',
+        'Harap isi semua field wajib',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 8,
+      );
+      return;
+    }
+
+    String? imageUrl;
+    if (_selectedImage != null) {
+      imageUrl = await _uploadImage(_selectedImage!);
+      if (imageUrl == null) return;
+    }
+
+    final body = {
+      "name": _nameController.text.trim(),
+      "description": _descController.text.trim(),
+      "price": _priceController.text.trim(),
+      "stock": _stockController.text.trim(),
+      "sku": _skuController.text.trim(),
+      "category_id": selectedCategory!.id,
+      "image_url": imageUrl,
+      "weight": _weightController.text.trim().isEmpty
+          ? null
+          : _weightController.text.trim(),
+      "dimensions": null,
+      "is_active": isActive,
+    };
+
+    try {
+      await productController.addProduct(body);
+      Get.snackbar(
+        'Sukses',
+        'Produk berhasil ditambahkan',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green.withOpacity(0.8),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 8,
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Gagal tambah produk: $e',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 8,
       );
     }
   }
@@ -52,14 +159,14 @@ class _TambahProdukState extends State<TambahProduk> {
         elevation: 0,
         title: const Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 20,
               backgroundImage: AssetImage("assets/images/image.png"),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   "Selamat Malam",
                   style: TextStyle(
@@ -82,55 +189,13 @@ class _TambahProdukState extends State<TambahProduk> {
             ),
           ],
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.mail, color: Colors.white),
-              style: IconButton.styleFrom(
-                backgroundColor: const Color(0xffF26D2B),
-                shape: const CircleBorder(),
-              ),
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 80),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 31, left: 28),
-              child: Row(
-                children: const [
-                  Text(
-                    "Produk",
-                    style: TextStyle(
-                      fontFamily: "Primary",
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(width: 3),
-                  Icon(Icons.chevron_right, color: Colors.grey),
-                  SizedBox(width: 3),
-                  Text(
-                    "Buat",
-                    style: TextStyle(
-                      fontFamily: "Primary",
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            //produk
+            // ================== FIELD NAMA ==================
             const Padding(
               padding: EdgeInsets.only(left: 28, top: 31),
               child: Text(
@@ -143,43 +208,19 @@ class _TambahProdukState extends State<TambahProduk> {
                 ),
               ),
             ),
-            //field produk
             Padding(
-              padding: const EdgeInsets.only(left: 28, right: 28, top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
               child: Material(
                 elevation: 4,
                 borderRadius: BorderRadius.circular(5),
                 child: TextField(
-                  decoration: InputDecoration(
-                    hintText: "Masukkan nama produk",
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                  ),
+                  controller: _nameController,
+                  decoration: _inputDecoration("Masukkan nama produk"),
                 ),
               ),
             ),
-            //deskripsi
-            const Padding(
-              padding: EdgeInsets.only(top: 20, left: 28),
-              child: Text(
-                "Deskripsi",
-                style: TextStyle(
-                  fontFamily: "Primary",
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            //field deskripsi
+
+            // ================== DESKRIPSI ==================
             const Padding(
               padding: EdgeInsets.only(top: 20, left: 28),
               child: Text(
@@ -193,351 +234,99 @@ class _TambahProdukState extends State<TambahProduk> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(left: 28, right: 28, top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
               child: Material(
                 elevation: 4,
                 borderRadius: BorderRadius.circular(5),
                 child: SizedBox(
                   height: 114,
                   child: TextField(
-                    decoration: InputDecoration(
-                      hintText: "Masukkan deskripsi produk",
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.all(16),
-                    ),
+                    controller: _descController,
                     maxLines: null,
+                    decoration: _inputDecoration("Masukkan deskripsi produk"),
                   ),
                 ),
               ),
             ),
+
+            // ================== HARGA & STOK ==================
             Padding(
-              padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
               child: Row(
                 children: [
-                  // ===== FIELD HARGA =====
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Harga',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontFamily: "Primary",
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Material(
-                          elevation: 4,
-                          borderRadius: BorderRadius.circular(5),
-                          child: TextField(
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter
-                                  .digitsOnly, // hanya angka
-                            ],
-                            decoration: InputDecoration(
-                              prefixIcon: Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 12,
-                                  right: 4,
-                                  top: 14,
-                                  bottom: 14,
-                                ),
-                                child: Text(
-                                  'Rp.',
-                                  style: TextStyle(
-                                    color: Colors.grey[800],
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                              prefixIconConstraints: const BoxConstraints(
-                                minWidth: 0,
-                                minHeight: 0,
-                              ),
-                              hintText: '0',
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(5),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 0,
-                                vertical: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: _numberField(
+                      "Harga",
+                      _priceController,
+                      prefix: 'Rp.',
                     ),
                   ),
-
                   const SizedBox(width: 16),
+                  Expanded(child: _numberField("Stok", _stockController)),
+                ],
+              ),
+            ),
 
-                  // ===== FIELD STOK =====
+            // ================== SKU & KATEGORI ==================
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(child: _textField("SKU", _skuController)),
+                  const SizedBox(width: 16),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Stok',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontFamily: "Primary",
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Material(
-                          elevation: 4,
-                          borderRadius: BorderRadius.circular(5),
-                          child: TextField(
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter
-                                  .digitsOnly, // hanya angka
-                            ],
-                            decoration: InputDecoration(
-                              hintText: '0',
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(5),
-                                borderSide: BorderSide.none,
+                    child: Obx(() {
+                      if (categoryController.isLoading.value) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      return DropdownButtonFormField<CategoryModel>(
+                        value: selectedCategory,
+                        isExpanded: true,
+                        decoration: _inputDecoration("Pilih kategori"),
+                        items: categoryController.categories
+                            .map(
+                              (cat) => DropdownMenuItem(
+                                value: cat,
+                                child: Text(cat.name),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedCategory = value;
+                          });
+                        },
+                      );
+                    }),
                   ),
                 ],
               ),
             ),
-            //sku dan kategori
+
+            // ================== BERAT & STATUS ==================
             Padding(
-              padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
               child: Row(
                 children: [
-                  // ===== FIELD SKU =====
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'SKU',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontFamily: "Primary",
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Material(
-                          elevation: 4,
-                          borderRadius: BorderRadius.circular(5),
-                          child: TextField(
-                            keyboardType: TextInputType.text, // ubah jadi text
-                            textCapitalization: TextCapitalization
-                                .characters, // biar otomatis kapital (opsional)
-                            decoration: InputDecoration(
-                              hintText: 'Masukkan kode',
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(5),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: _numberField(
+                      "Berat (gram)",
+                      _weightController,
+                      suffix: 'gr',
                     ),
                   ),
-
                   const SizedBox(width: 16),
-
-                  // ===== FIELD KATEGORI =====
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Kategori',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontFamily: "Primary",
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Material(
-                          elevation: 4,
-                          borderRadius: BorderRadius.circular(5),
-                          child: DropdownButtonFormField<String>(
-                            isExpanded: true,
-                            menuMaxHeight: 250,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(5),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
-                              ),
-                            ),
-                            hint: const Text(
-                              'Pilih salah satu opsi',
-                              style: TextStyle(
-                                fontFamily: "Primary",
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'ayam pejantan',
-                                child: Text(
-                                  'Ayam Pejantan',
-                                  style: TextStyle(
-                                    fontFamily: "Primary",
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'ayam broiler',
-                                child: Text(
-                                  'Ayam Broiler',
-                                  style: TextStyle(
-                                    fontFamily: "Primary",
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'lainnya',
-                                child: Text(
-                                  'Lainnya',
-                                  style: TextStyle(
-                                    fontFamily: "Primary",
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              // TODO: handle value change
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            //berat
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-              child: Row(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start, // penting biar sejajar di atas
-                children: [
-                  // ================== FIELD BERAT ==================
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Berat (gram)',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 6),
-                        Material(
-                          elevation: 4,
-                          borderRadius: BorderRadius.circular(5),
-                          child: TextField(
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: InputDecoration(
-                              hintText: '0',
-                              suffixIcon: Padding(
-                                padding: const EdgeInsets.only(
-                                  right: 12,
-                                  top: 14,
-                                  bottom: 14,
-                                ),
-                                child: Text(
-                                  'gr',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              suffixIconConstraints: const BoxConstraints(
-                                minWidth: 0,
-                                minHeight: 0,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(5),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(width: 16),
-
-                  // ================== SWITCH AKTIF ==================
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(
-                        height: 26,
-                      ), // supaya posisi switch sejajar vertikal dengan TextField
+                      const SizedBox(height: 26),
                       Row(
                         children: [
                           Transform.scale(
-                            scale: 0.8, // kecilin biar proporsional
+                            scale: 0.8,
                             child: Switch(
                               value: isActive,
-                              onChanged: (value) {
-                                setState(() {
-                                  isActive = value;
-                                });
-                              },
+                              onChanged: (v) => setState(() => isActive = v),
                               activeColor: const Color(0xffF26D2B),
                             ),
                           ),
@@ -552,22 +341,15 @@ class _TambahProdukState extends State<TambahProduk> {
                           ),
                         ],
                       ),
-                      const Text(
-                        'Produk akan ditampilkan\ndi halaman utama',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                          height: 1.3,
-                        ),
-                      ),
                     ],
                   ),
                 ],
               ),
             ),
-            // Tombol + preview gambar
+
+            // ================== IMAGE PICKER ==================
             Padding(
-              padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -592,12 +374,10 @@ class _TambahProdukState extends State<TambahProduk> {
                       ),
                     ),
                   ),
-
                   if (_selectedImage != null) ...[
                     const SizedBox(height: 12),
                     Stack(
                       children: [
-                        // ✅ Bungkus dengan SizedBox supaya ukuran fix
                         SizedBox(
                           width: 120,
                           height: 120,
@@ -613,11 +393,7 @@ class _TambahProdukState extends State<TambahProduk> {
                           top: 4,
                           right: 4,
                           child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedImage = null;
-                              });
-                            },
+                            onTap: () => setState(() => _selectedImage = null),
                             child: Container(
                               decoration: const BoxDecoration(
                                 color: Colors.black54,
@@ -635,72 +411,57 @@ class _TambahProdukState extends State<TambahProduk> {
                       ],
                     ),
                   ],
+                ],
+              ),
+            ),
 
-                  Row(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(top: 41),
-                        child: SizedBox(
-                          width: 79,
-                          child: ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                const Color(0xffEE9400),
-                              ),
-                              shape:
-                                  MaterialStateProperty.all<
-                                    RoundedRectangleBorder
-                                  >(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                            ),
-                            onPressed: () {},
-                            child: const Text(
-                              "Buat",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontFamily: "Primary",
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
+            // ================== BUTTON BUAT & BATAL ==================
+            Padding(
+              padding: const EdgeInsets.only(left: 28, top: 41),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 79,
+                    child: ElevatedButton(
+                      onPressed: _submitProduct,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xffEE9400),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      Padding(
-                        padding: EdgeInsets.only(top: 41, left: 10),
-                        child: SizedBox(
-                          width: 80,
-                          child: ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                const Color(0xffFFFFFF),
-                              ),
-                              shape:
-                                  MaterialStateProperty.all<
-                                    RoundedRectangleBorder
-                                  >(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                            ),
-                            onPressed: () {},
-                            child: const Text(
-                              "Batal",
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontFamily: "Primary",
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
+                      child: const Text(
+                        "Buat",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: "Primary",
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
                       ),
-                    ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 80,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        "Batal",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontFamily: "Primary",
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -708,6 +469,114 @@ class _TambahProdukState extends State<TambahProduk> {
           ],
         ),
       ),
+    );
+  }
+
+  // ================== HELPERS ==================
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(5),
+        borderSide: BorderSide.none,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    );
+  }
+
+  Widget _textField(String label, TextEditingController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+            fontFamily: "Primary",
+          ),
+        ),
+        const SizedBox(height: 6),
+        Material(
+          elevation: 4,
+          borderRadius: BorderRadius.circular(5),
+          child: TextField(
+            controller: controller,
+            decoration: _inputDecoration("Masukkan $label"),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _numberField(
+    String label,
+    TextEditingController controller, {
+    String? prefix,
+    String? suffix,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+            fontFamily: "Primary",
+          ),
+        ),
+        const SizedBox(height: 6),
+        Material(
+          elevation: 4,
+          borderRadius: BorderRadius.circular(5),
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: _inputDecoration('0').copyWith(
+              prefixIcon: prefix != null
+                  ? Padding(
+                      padding: const EdgeInsets.only(
+                        left: 12,
+                        right: 4,
+                        top: 14,
+                        bottom: 14,
+                      ),
+                      child: Text(
+                        prefix,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 16,
+                        ),
+                      ),
+                    )
+                  : null,
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 0,
+                minHeight: 0,
+              ),
+              suffixIcon: suffix != null
+                  ? Padding(
+                      padding: const EdgeInsets.only(
+                        right: 12,
+                        top: 14,
+                        bottom: 14,
+                      ),
+                      child: Text(
+                        suffix,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  : null,
+              suffixIconConstraints: const BoxConstraints(
+                minWidth: 0,
+                minHeight: 0,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
