@@ -13,9 +13,31 @@ import 'package:my_app/screens/admin/produk/DaftarKategoriProduk.dart';
 import 'package:my_app/screens/admin/produk/TambahProduk.dart';
 import 'package:my_app/screens/admin/profile/AdminProfile.dart';
 import 'package:get/get.dart';
+import 'package:my_app/screens/auth/LoginScreen.dart';
+
+// void main() {
+//   Get.put(CategoryController());
+//   runApp(const MyApp());
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GetMaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       title: 'Flutter Demo',
+//       theme: ThemeData(
+//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+//       ),
+//       initialRoute: AppRoutes.main,
+//       getPages: AppPages.pages,
+//     );
+//   }
+// }
 
 void main() {
-  Get.put(CategoryController());
   runApp(const MyApp());
 }
 
@@ -24,14 +46,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      initialRoute: AppRoutes.main,
-      getPages: AppPages.pages,
+      home: LoginScreen(),
     );
   }
 }
