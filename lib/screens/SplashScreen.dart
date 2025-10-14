@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/admin/HomeScreen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -10,17 +13,25 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final box = GetStorage();
+
   @override
   void initState() {
     super.initState();
+    _checkLoginStatus();
+  }
 
-    // Setelah 3 detik, pindah ke HomeScreen
-    Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Homescreen()),
-      );
-    });
+  void _checkLoginStatus() async {
+    await Future.delayed(const Duration(seconds: 2));
+
+    final token = box.read('token');
+    if (token != null && token.isNotEmpty) {
+      // Kalau token ada → langsung ke halaman utama
+      Get.offAllNamed(AppRoutes.main);
+    } else {
+      // Kalau tidak ada token → ke halaman login
+      Get.offAllNamed(AppRoutes.loginScreen);
+    }
   }
 
   @override

@@ -39,7 +39,7 @@ class _TambahkategoriState extends State<Tambahkategori> {
     super.initState();
     // Kalau mode edit, isi field dengan data kategori
     if (widget.category != null) {
-      _namaController.text = widget.category!.name;
+      _namaController.text = widget.category!.name ?? '';
       _deskripsiController.text = widget.category!.description ?? '';
     }
   }

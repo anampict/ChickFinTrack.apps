@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:get/utils.dart';
 import 'package:my_app/controller/category_controller.dart';
 import 'package:my_app/data/models/category_model.dart';
+import 'package:my_app/data/repositories/category_repository.dart';
 import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/admin/produk/TambahKategori.dart';
 
@@ -31,11 +32,7 @@ class Daftarkategoriproduk extends StatelessWidget {
 
           try {
             await controller.deleteCategory(category.id);
-
-            // Tutup loading
             Get.back();
-
-            // Snackbar sukses
             Get.snackbar(
               "Sukses",
               "Kategori '${category.name}' berhasil dihapus",
@@ -46,9 +43,7 @@ class Daftarkategoriproduk extends StatelessWidget {
               borderRadius: 10,
             );
           } catch (e) {
-            // Tutup loading jika error
             Get.back();
-
             Get.snackbar(
               "Gagal",
               "Gagal menghapus kategori: $e",
@@ -77,6 +72,10 @@ class Daftarkategoriproduk extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Inject repository dan controller di sini (bukan di main.dart)
+    Get.put(CategoryRepository());
+    final CategoryController controller = Get.put(CategoryController());
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -84,16 +83,11 @@ class Daftarkategoriproduk extends StatelessWidget {
         elevation: 0,
         title: Row(
           children: [
-            // Foto Profil
             const CircleAvatar(
               radius: 20,
-              backgroundImage: AssetImage(
-                "assets/images/image.png", // contoh foto online
-              ),
+              backgroundImage: AssetImage("assets/images/image.png"),
             ),
             const SizedBox(width: 10),
-
-            // Teks Salam + Nama
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
@@ -121,140 +115,108 @@ class Daftarkategoriproduk extends StatelessWidget {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12), // kasih jarak ke kanan
+            padding: const EdgeInsets.only(right: 12),
             child: IconButton(
               onPressed: () {},
               icon: const Icon(Icons.mail, color: Colors.white),
               style: IconButton.styleFrom(
-                backgroundColor: Color(0xffF26D2B),
-                shape: CircleBorder(),
+                backgroundColor: const Color(0xffF26D2B),
+                shape: const CircleBorder(),
               ),
             ),
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 17, left: 20),
-            child: Text(
-              "Kategori",
-              style: const TextStyle(
-                fontFamily: "Primary",
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
-            ),
-          ),
+      body: GetX<CategoryController>(
+        builder: (controller) {
+          if (controller.isLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          const SizedBox(height: 10),
+          if (controller.categories.isEmpty) {
+            return const Center(child: Text("Tidak ada kategori"));
+          }
 
-          //Bagian List dinamis pakai Expanded agar scrollable
-          Expanded(
-            child: GetX<CategoryController>(
-              builder: (controller) {
-                if (controller.isLoading.value) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (controller.categories.isEmpty) {
-                  return const Center(child: Text("Tidak ada kategori"));
-                }
-
-                return RefreshIndicator(
-                  onRefresh: controller.fetchCategories, // 🌀 refresh data
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    itemCount: controller.categories.length,
-                    itemBuilder: (context, index) {
-                      final category = controller.categories[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Card(
-                          elevation: 2,
-                          color: Colors.white,
-                          child: SizedBox(
-                            height: 80,
-                            child: Row(
-                              children: [
-                                Card(
-                                  color: const Color(0xffFFB02E),
-                                  child: SizedBox(
-                                    width: 60,
-                                    height: 60,
-                                    child: Center(
-                                      child: SvgPicture.asset(
-                                        "assets/icons/kategoriproduk.svg",
-                                        width: 39,
-                                        height: 39,
-                                      ),
-                                    ),
-                                  ),
+          return RefreshIndicator(
+            onRefresh: controller.fetchCategories,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              itemCount: controller.categories.length,
+              itemBuilder: (context, index) {
+                final category = controller.categories[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Card(
+                    elevation: 2,
+                    color: Colors.white,
+                    child: SizedBox(
+                      height: 80,
+                      child: Row(
+                        children: [
+                          Card(
+                            color: const Color(0xffFFB02E),
+                            child: SizedBox(
+                              width: 60,
+                              height: 60,
+                              child: Center(
+                                child: SvgPicture.asset(
+                                  "assets/icons/kategoriproduk.svg",
+                                  width: 39,
+                                  height: 39,
                                 ),
-                                const SizedBox(width: 20),
-                                Text(
-                                  category.name,
-                                  style: const TextStyle(
-                                    fontFamily: "Second",
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const Spacer(),
-                                InkWell(
-                                  onTap: () {
-                                    _hapusKategori(category);
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: SvgPicture.asset(
-                                      "assets/icons/hapus.svg",
-                                      width: 20,
-                                      height: 20,
-                                    ),
-                                  ),
-                                ),
-
-                                InkWell(
-                                  onTap: () {
-                                    Get.to(
-                                      () => Tambahkategori(
-                                        category:
-                                            category, // kirim data ke form edit
-                                      ),
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: SvgPicture.asset(
-                                      "assets/icons/edit.svg",
-                                      width: 24,
-                                      height: 24,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
+                          const SizedBox(width: 20),
+                          Text(
+                            category.name ?? '',
+                            style: const TextStyle(
+                              fontFamily: "Second",
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          InkWell(
+                            onTap: () => _hapusKategori(category),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: SvgPicture.asset(
+                                "assets/icons/hapus.svg",
+                                width: 20,
+                                height: 20,
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Get.to(() => Tambahkategori(category: category));
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: SvgPicture.asset(
+                                "assets/icons/edit.svg",
+                                width: 24,
+                                height: 24,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },
             ),
-          ),
-        ],
+          );
+        },
       ),
-
-      // Tambahkan FAB di bawah kanan
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.orange,
         onPressed: () {
           Get.toNamed(AppRoutes.TambahKategori);
         },
-        child: Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

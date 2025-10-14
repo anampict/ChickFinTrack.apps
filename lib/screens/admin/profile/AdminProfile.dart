@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:my_app/controller/auth_controller.dart';
 
 class AdminProfile extends StatelessWidget {
   const AdminProfile({super.key});
@@ -102,7 +104,18 @@ class AdminProfile extends StatelessWidget {
                     _buildMenuItem(
                       icon: Icons.logout,
                       title: 'Logout',
-                      onTap: () {},
+                      onTap: () {
+                        Get.defaultDialog(
+                          title: "Logout",
+                          middleText: "Apakah kamu yakin ingin keluar?",
+                          textCancel: "Batal",
+                          textConfirm: "Logout",
+                          confirmTextColor: Colors.white,
+                          onConfirm: () {
+                            // Get.find<AuthController>().logout();
+                          },
+                        );
+                      },
                     ),
                   ],
                 ),

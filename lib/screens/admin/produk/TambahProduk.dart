@@ -76,10 +76,7 @@ class _TambahProdukState extends State<TambahProduk> {
       request.files.add(await http.MultipartFile.fromPath('image', file.path));
 
       // Tambahkan header dari ApiConfig
-      request.headers.addAll({
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${ApiConfig.token}',
-      });
+      request.headers.addAll(ApiConfig.headers);
 
       final response = await request.send();
       final respStr = await response.stream.bytesToString();
@@ -316,7 +313,7 @@ class _TambahProdukState extends State<TambahProduk> {
                             .map(
                               (cat) => DropdownMenuItem(
                                 value: cat,
-                                child: Text(cat.name),
+                                child: Text(cat.name ?? 'Tanpa Nama'),
                               ),
                             )
                             .toList(),

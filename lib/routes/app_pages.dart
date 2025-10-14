@@ -1,14 +1,18 @@
 import 'package:get/get.dart';
 import 'package:my_app/navigation/MainNavigation.dart';
 import 'package:my_app/routes/app_routes.dart';
+import 'package:my_app/screens/SplashScreen.dart';
 import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
 import 'package:my_app/screens/admin/produk/DataProduk.dart';
 import 'package:my_app/screens/admin/produk/TambahKategori.dart';
 import 'package:my_app/screens/admin/produk/DaftarKategoriProduk.dart';
 import 'package:my_app/screens/admin/produk/TambahProduk.dart';
+import 'package:my_app/screens/auth/LoginScreen.dart';
 
 class AppPages {
   static final pages = [
+    GetPage(name: AppRoutes.SplashScreen, page: () => const SplashScreen()),
+    GetPage(name: AppRoutes.loginScreen, page: () => const LoginScreen()),
     GetPage(name: AppRoutes.main, page: () => MainNavigation()),
     //tambahkategori
     GetPage(

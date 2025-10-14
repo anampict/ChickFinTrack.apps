@@ -1,43 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:my_app/component/Menu2.dart';
-import 'package:my_app/controller/category_controller.dart';
-import 'package:my_app/navigation/MainNavigation.dart';
-import 'package:my_app/routes/app_pages.dart';
-import 'package:my_app/routes/app_routes.dart';
-import 'package:my_app/screens/admin/HomeScreen.dart';
-import 'package:my_app/screens/SplashScreen.dart';
-import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
-import 'package:my_app/screens/admin/produk/DataProduk.dart';
-import 'package:my_app/screens/admin/produk/TambahKategori.dart';
-import 'package:my_app/screens/admin/produk/DaftarKategoriProduk.dart';
-import 'package:my_app/screens/admin/produk/TambahProduk.dart';
-import 'package:my_app/screens/admin/profile/AdminProfile.dart';
 import 'package:get/get.dart';
-import 'package:my_app/screens/auth/LoginScreen.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:my_app/controller/auth_controller.dart';
+import 'controller/category_controller.dart';
+import 'routes/app_pages.dart';
+import 'routes/app_routes.dart';
 
-// void main() {
-//   Get.put(CategoryController());
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return GetMaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       title: 'Flutter Demo',
-//       theme: ThemeData(
-//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-//       ),
-//       initialRoute: AppRoutes.main,
-//       getPages: AppPages.pages,
-//     );
-//   }
-// }
-
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await GetStorage.init();
   runApp(const MyApp());
 }
 
@@ -46,9 +17,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
+      initialRoute: AppRoutes.SplashScreen,
+      getPages: AppPages.pages,
     );
   }
 }

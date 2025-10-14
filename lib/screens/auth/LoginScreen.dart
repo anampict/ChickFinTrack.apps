@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:my_app/controller/auth_controller.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -11,6 +12,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginPageState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthController _authController = Get.put(AuthController());
+
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
@@ -24,11 +27,8 @@ class _LoginPageState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 🟠 Logo
               Image.asset("assets/images/logologin.png", height: 60),
               const SizedBox(height: 8),
-
-              // 📝 Subjudul
               const Text(
                 'Masuk ke akun anda',
                 style: TextStyle(
@@ -40,9 +40,9 @@ class _LoginPageState extends State<LoginScreen> {
               ),
               const SizedBox(height: 30),
 
-              // 📧 Input Email dengan elevation & label di atas
+              //Email
               Material(
-                elevation: 4, // efek bayangan
+                elevation: 4,
                 shadowColor: Colors.black,
                 borderRadius: BorderRadius.circular(10),
                 child: TextField(
@@ -50,12 +50,11 @@ class _LoginPageState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: 'Alamat E-mail',
-                    floatingLabelBehavior:
-                        FloatingLabelBehavior.always, // label tetap di atas
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
                     hintText: 'Masukkan email',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none, // hilangkan border default
+                      borderSide: BorderSide.none,
                     ),
                     filled: true,
                     fillColor: Colors.white,
@@ -68,7 +67,7 @@ class _LoginPageState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 🔐 Input Password dengan elevation & label di atas
+              //Password
               Material(
                 elevation: 4,
                 shadowColor: Colors.black,
@@ -105,10 +104,8 @@ class _LoginPageState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 8),
 
-              // ☑️ Ingat Saya
               Row(
                 children: [
                   Checkbox(
@@ -125,40 +122,58 @@ class _LoginPageState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 🔸 Tombol Masuk & Register (width 80, rounded 10)
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: 80,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Tambahkan fungsi login
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                  // 🔸 Tombol Masuk
+                  Obx(() {
+                    return SizedBox(
+                      width: 80,
+                      child: ElevatedButton(
+                        onPressed: _authController.isLoading.value
+                            ? null
+                            : () {
+                                final email = _emailController.text.trim();
+                                final password = _passwordController.text
+                                    .trim();
+                                _authController.login(email, password);
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: _authController.isLoading.value
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Masuk',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  fontFamily: "Primary",
+                                ),
+                              ),
                       ),
-                      child: const Text(
-                        'Masuk',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          fontFamily: "Primary",
-                        ),
-                      ),
-                    ),
-                  ),
+                    );
+                  }),
                   const SizedBox(width: 10),
+
+                  // 🔹 Tombol Register
                   SizedBox(
                     width: 80,
                     child: OutlinedButton(
                       onPressed: () {
-                        // TODO: Navigasi ke halaman register
+                        //  Get.toNamed(AppRoutes.register);
                       },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.black12),
