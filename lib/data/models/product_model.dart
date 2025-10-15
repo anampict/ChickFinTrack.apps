@@ -7,7 +7,7 @@ class ProductModel {
   final String sku;
   final int categoryId;
   final String? imageUrl;
-  final double weight;
+  final double? weight;
   final String? dimensions;
   final bool isActive;
   final DateTime createdAt;
@@ -41,7 +41,9 @@ class ProductModel {
       sku: json['sku'],
       categoryId: int.parse(json['category_id'].toString()),
       imageUrl: json['image_url'],
-      weight: double.parse(json['weight'].toString()),
+      weight: json['weight'] != null
+          ? double.tryParse(json['weight'].toString())
+          : null,
       dimensions: json['dimensions'],
       isActive: json['is_active'],
       createdAt: DateTime.parse(json['created_at']),
