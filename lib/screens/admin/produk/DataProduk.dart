@@ -5,6 +5,7 @@ import 'package:my_app/controller/product_controller.dart';
 import 'package:my_app/data/repositories/product_repository.dart';
 import 'package:my_app/helper/utils.dart';
 import 'package:my_app/routes/app_routes.dart';
+import 'package:my_app/screens/admin/produk/TambahProduk.dart';
 
 class Dataproduk extends StatelessWidget {
   const Dataproduk({super.key});
@@ -106,7 +107,7 @@ class Dataproduk extends StatelessWidget {
                       product.imageUrl ??
                       "assets/images/fotoproduk.png", // fallback jika null
                   onEdit: () {
-                    Get.toNamed(AppRoutes.TambahProduk, arguments: product);
+                    Get.to(() => TambahProduk(product: product));
                   },
                 ),
               );

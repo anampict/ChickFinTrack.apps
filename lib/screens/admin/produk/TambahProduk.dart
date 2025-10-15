@@ -10,17 +10,19 @@ import 'package:my_app/controller/category_controller.dart';
 import 'package:my_app/controller/product_controller.dart';
 import 'package:my_app/data/api/api_config.dart';
 import 'package:my_app/data/models/category_model.dart';
+import 'package:my_app/data/models/product_model.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class TambahProduk extends StatefulWidget {
-  const TambahProduk({super.key});
+  final ProductModel? product; // null = tambah, ada = edit
+
+  const TambahProduk({super.key, this.product});
 
   @override
   State<TambahProduk> createState() => _TambahProdukState();
 }
 
 class _TambahProdukState extends State<TambahProduk> {
-  // Controller untuk semua field
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   final _priceController = TextEditingController();
@@ -30,6 +32,7 @@ class _TambahProdukState extends State<TambahProduk> {
 
   bool isActive = false;
   File? _selectedImage;
+  String? _imageUrl;
   CategoryModel? selectedCategory;
 
   final categoryController = Get.find<CategoryController>();
@@ -39,9 +42,34 @@ class _TambahProdukState extends State<TambahProduk> {
   void initState() {
     super.initState();
     categoryController.fetchCategories();
+
+    // Jika edit, isi field dengan data produk
+    if (widget.product != null) {
+      final p = widget.product!;
+      _nameController.text = p.name ?? '';
+      _descController.text = p.description ?? '';
+      _priceController.text = p.price?.toString() ?? '';
+      _stockController.text = p.stock?.toString() ?? '';
+      _skuController.text = p.sku ?? '';
+      _weightController.text = p.weight?.toString() ?? '';
+      isActive = p.isActive ?? false;
+      _imageUrl = p.imageUrl;
+      // Tunggu kategori terload, lalu set selectedCategory
+      Future<void> _setSelectedCategory() async {
+        await Future.delayed(Duration(milliseconds: 100)); // beri waktu fetch
+        final p = widget.product!;
+        final cat = categoryController.categories.firstWhereOrNull(
+          (c) => c.id == p.categoryId,
+        );
+        if (cat != null) {
+          setState(() {
+            selectedCategory = cat;
+          });
+        }
+      }
+    }
   }
 
-  // ================== PICK IMAGE ==================
   Future<void> _pickImage() async {
     var status = await Permission.photos.request();
     var storageStatus = await Permission.storage.request();
@@ -53,6 +81,7 @@ class _TambahProdukState extends State<TambahProduk> {
       if (image != null) {
         setState(() {
           _selectedImage = File(image.path);
+          _imageUrl = null; // reset jika ganti gambar
         });
       }
     } else {
@@ -64,29 +93,21 @@ class _TambahProdukState extends State<TambahProduk> {
     }
   }
 
-  // ================== UPLOAD IMAGE ==================
   Future<String?> _uploadImage(File file) async {
     try {
       final request = http.MultipartRequest(
         'POST',
         Uri.parse('https://chickfintrack.id/api/upload/image'),
       );
-
-      // Gunakan key yang benar 'image'
       request.files.add(await http.MultipartFile.fromPath('image', file.path));
-
-      // Tambahkan header dari ApiConfig
       request.headers.addAll(ApiConfig.headers);
 
       final response = await request.send();
       final respStr = await response.stream.bytesToString();
 
-      print('Upload response status: ${response.statusCode}');
-      print('Upload response body: $respStr');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         final json = jsonDecode(respStr);
-        final imagePath = json['data']; // "products/xxxxx.png"
+        final imagePath = json['data'];
         final fullUrl = 'https://chickfintrack.id/storage/$imagePath';
         return fullUrl;
       } else {
@@ -100,7 +121,6 @@ class _TambahProdukState extends State<TambahProduk> {
         return null;
       }
     } catch (e) {
-      print('Upload error: $e');
       Get.snackbar(
         'Error',
         'Terjadi kesalahan saat upload gambar',
@@ -112,7 +132,6 @@ class _TambahProdukState extends State<TambahProduk> {
     }
   }
 
-  //================== SUBMIT PRODUCT ==================
   Future<void> _submitProduct() async {
     if (_nameController.text.isEmpty ||
         _priceController.text.isEmpty ||
@@ -131,7 +150,7 @@ class _TambahProdukState extends State<TambahProduk> {
       return;
     }
 
-    String? imageUrl;
+    String? imageUrl = _imageUrl;
     if (_selectedImage != null) {
       imageUrl = await _uploadImage(_selectedImage!);
       if (imageUrl == null) return;
@@ -153,21 +172,36 @@ class _TambahProdukState extends State<TambahProduk> {
     };
 
     try {
-      await productController.addProduct(body);
-      Get.snackbar(
-        'Sukses',
-        'Produk berhasil ditambahkan',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green.withOpacity(0.8),
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(12),
-        borderRadius: 8,
-      );
+      if (widget.product == null) {
+        // TAMBAH
+        await productController.addProduct(body);
+        Get.snackbar(
+          'Sukses',
+          'Produk berhasil ditambahkan',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.green.withOpacity(0.8),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 8,
+        );
+      } else {
+        // EDIT
+        await productController.editProduct(widget.product!.id!, body);
+        Get.snackbar(
+          'Sukses',
+          'Produk berhasil diupdate',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.green.withOpacity(0.8),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 8,
+        );
+      }
       Navigator.pop(context);
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Gagal tambah produk: $e',
+        'Gagal tambah/edit produk: $e',
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.withOpacity(0.8),
         colorText: Colors.white,
@@ -448,12 +482,45 @@ class _TambahProdukState extends State<TambahProduk> {
                         ),
                       ],
                     ),
+                  ] else if (_imageUrl != null) ...[
+                    const SizedBox(height: 12),
+                    Stack(
+                      children: [
+                        SizedBox(
+                          width: 120,
+                          height: 120,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(_imageUrl!, fit: BoxFit.cover),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => setState(() => _imageUrl = null),
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              padding: const EdgeInsets.all(4),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ],
               ),
             ),
 
-            // ================== BUTTON BUAT & BATAL ==================
+            // ================== BUTTON BUAT/UPDATE & BATAL ==================
             Padding(
               padding: const EdgeInsets.only(left: 28, top: 41),
               child: Row(
@@ -468,9 +535,9 @@ class _TambahProdukState extends State<TambahProduk> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text(
-                        "Buat",
-                        style: TextStyle(
+                      child: Text(
+                        widget.product == null ? "Buat" : "Update",
+                        style: const TextStyle(
                           color: Colors.white,
                           fontFamily: "Primary",
                           fontWeight: FontWeight.w600,
@@ -510,7 +577,6 @@ class _TambahProdukState extends State<TambahProduk> {
     );
   }
 
-  // ================== HELPERS ==================
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
