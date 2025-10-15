@@ -313,7 +313,13 @@ class _TambahProdukState extends State<TambahProduk> {
                             .map(
                               (cat) => DropdownMenuItem(
                                 value: cat,
-                                child: Text(cat.name ?? 'Tanpa Nama'),
+                                child: Text(
+                                  cat.name ?? 'Tanpa Nama',
+                                  style: TextStyle(
+                                    fontFamily: "Primary",
+                                    fontSize: 11,
+                                  ),
+                                ),
                               ),
                             )
                             .toList(),
@@ -333,8 +339,10 @@ class _TambahProdukState extends State<TambahProduk> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
+                  SizedBox(
+                    width: 150,
                     child: _numberField(
                       "Berat (gram)",
                       _weightController,
@@ -366,6 +374,10 @@ class _TambahProdukState extends State<TambahProduk> {
                             ),
                           ),
                         ],
+                      ),
+                      Text(
+                        "Produk Akan Ditampilkan\nDihalaman Utama",
+                        style: TextStyle(fontFamily: "Primary", fontSize: 12),
                       ),
                     ],
                   ),

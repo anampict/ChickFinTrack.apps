@@ -33,21 +33,21 @@ class AuthController extends GetxController {
   }
 
   //logout
-  // void logout() {
-  //   final box = GetStorage();
-  //   box.remove('token');
+  void logout() {
+    final box = GetStorage();
+    box.remove('token');
 
-  //   isLoggedIn.value = false;
+    isLoggedIn.value = false;
 
-  //   if (Get.isRegistered<AuthController>()) {
-  //     Get.delete<AuthController>(force: true);
-  //   }
-  //   Get.offAllNamed(AppRoutes.loginScreen);
+    if (Get.isRegistered<AuthController>()) {
+      Get.delete<AuthController>(force: true);
+    }
+    Get.offAllNamed(AppRoutes.loginScreen);
 
-  //   Get.snackbar(
-  //     'Logout Berhasil',
-  //     'Anda telah keluar dari aplikasi',
-  //     snackPosition: SnackPosition.TOP,
-  //   );
-  // }
+    Get.snackbar(
+      'Logout Berhasil',
+      'Anda telah keluar dari aplikasi',
+      snackPosition: SnackPosition.TOP,
+    );
+  }
 }

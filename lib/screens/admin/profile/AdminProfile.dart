@@ -112,7 +112,7 @@ class AdminProfile extends StatelessWidget {
                           textConfirm: "Logout",
                           confirmTextColor: Colors.white,
                           onConfirm: () {
-                            // Get.find<AuthController>().logout();
+                            Get.find<AuthController>().logout();
                           },
                         );
                       },
