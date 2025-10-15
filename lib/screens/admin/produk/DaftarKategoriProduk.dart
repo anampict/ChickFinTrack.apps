@@ -72,9 +72,7 @@ class Daftarkategoriproduk extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inject repository dan controller di sini (bukan di main.dart)
-    Get.put(CategoryRepository());
-    final CategoryController controller = Get.put(CategoryController());
+    final CategoryController controller = Get.find<CategoryController>();
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -139,74 +137,90 @@ class Daftarkategoriproduk extends StatelessWidget {
 
           return RefreshIndicator(
             onRefresh: controller.fetchCategories,
-            child: ListView.builder(
+            child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              itemCount: controller.categories.length,
-              itemBuilder: (context, index) {
-                final category = controller.categories[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Card(
-                    elevation: 2,
-                    color: Colors.white,
-                    child: SizedBox(
-                      height: 80,
-                      child: Row(
-                        children: [
-                          Card(
-                            color: const Color(0xffFFB02E),
-                            child: SizedBox(
-                              width: 60,
-                              height: 60,
-                              child: Center(
-                                child: SvgPicture.asset(
-                                  "assets/icons/kategoriproduk.svg",
-                                  width: 39,
-                                  height: 39,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 16, bottom: 8, left: 4),
+                  child: Text(
+                    "Kategori",
+                    style: TextStyle(
+                      fontFamily: "Primary",
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+
+                // Daftar kategori
+                ...List.generate(controller.categories.length, (index) {
+                  final category = controller.categories[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6, top: 10),
+                    child: Card(
+                      elevation: 2,
+                      color: Colors.white,
+                      child: SizedBox(
+                        height: 80,
+                        child: Row(
+                          children: [
+                            Card(
+                              color: const Color(0xffFFB02E),
+                              child: SizedBox(
+                                width: 60,
+                                height: 60,
+                                child: Center(
+                                  child: SvgPicture.asset(
+                                    "assets/icons/kategoriproduk.svg",
+                                    width: 39,
+                                    height: 39,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 20),
-                          Text(
-                            category.name ?? '',
-                            style: const TextStyle(
-                              fontFamily: "Second",
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          InkWell(
-                            onTap: () => _hapusKategori(category),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: SvgPicture.asset(
-                                "assets/icons/hapus.svg",
-                                width: 20,
-                                height: 20,
+                            const SizedBox(width: 20),
+                            Text(
+                              category.name ?? '',
+                              style: const TextStyle(
+                                fontFamily: "Second",
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
-                          InkWell(
-                            onTap: () {
-                              Get.to(() => Tambahkategori(category: category));
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: SvgPicture.asset(
-                                "assets/icons/edit.svg",
-                                width: 24,
-                                height: 24,
+                            const Spacer(),
+                            InkWell(
+                              onTap: () => _hapusKategori(category),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: SvgPicture.asset(
+                                  "assets/icons/hapus.svg",
+                                  width: 20,
+                                  height: 20,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                        ],
+                            InkWell(
+                              onTap: () {
+                                Get.to(
+                                  () => Tambahkategori(category: category),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: SvgPicture.asset(
+                                  "assets/icons/edit.svg",
+                                  width: 24,
+                                  height: 24,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                }),
+              ],
             ),
           );
         },

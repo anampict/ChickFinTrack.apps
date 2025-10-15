@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:my_app/controller/category_controller.dart';
 import '../data/repositories/auth_repository.dart';
 import '../routes/app_routes.dart';
 
@@ -25,6 +26,7 @@ class AuthController extends GetxController {
       box.write('user', user);
 
       isLoggedIn.value = true;
+      await Get.find<CategoryController>().fetchCategories();
       Get.snackbar('Sukses', 'Login berhasil');
       Get.offAllNamed(AppRoutes.main);
     } else {
