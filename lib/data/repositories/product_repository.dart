@@ -15,4 +15,10 @@ class ProductRepository {
     final data = await ProductApi.createProduct(body);
     return ProductModel.fromJson(data);
   }
+
+  //edit product
+  Future<ProductModel> updateProduct(int id, Map<String, dynamic> body) async {
+    final data = await ProductApi.updateProduct(id, body);
+    return ProductModel.fromJson(data);
+  }
 }

@@ -1,13 +1,19 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:my_app/data/api/api_config.dart';
+import 'package:get_storage/get_storage.dart';
 
 class CategoryApi {
   //get kategori
   static Future<List<dynamic>> getCategories() async {
+    final box = GetStorage();
+    final token = box.read('token');
     final response = await http.get(
       Uri.parse('${ApiConfig.baseUrl}/categories'),
-      headers: ApiConfig.headers,
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
     );
 
     if (response.statusCode == 200) {
@@ -26,9 +32,14 @@ class CategoryApi {
     required String name,
     required String description,
   }) async {
+    final box = GetStorage();
+    final token = box.read('token');
     final response = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/categories'),
-      headers: ApiConfig.headers,
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
       body: jsonEncode({"name": name, "description": description}),
     );
 
@@ -47,9 +58,16 @@ class CategoryApi {
     required String name,
     required String description,
   }) async {
+    final box = GetStorage();
+    final token = box.read('token');
     final response = await http.put(
       Uri.parse('${ApiConfig.baseUrl}/categories/$id'),
-      headers: ApiConfig.headers,
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
       body: jsonEncode({"name": name, "description": description}),
     );
 
@@ -63,9 +81,14 @@ class CategoryApi {
 
   // delete kategori
   static Future<void> deleteCategory(int id) async {
+    final box = GetStorage();
+    final token = box.read('token');
     final response = await http.delete(
       Uri.parse('${ApiConfig.baseUrl}/categories/$id'),
-      headers: ApiConfig.headers,
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
     );
 
     if (response.statusCode != 200) {

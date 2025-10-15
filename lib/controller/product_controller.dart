@@ -41,4 +41,23 @@ class ProductController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  //edit product
+  Future<void> editProduct(int id, Map<String, dynamic> body) async {
+    try {
+      isLoading.value = true;
+      final updatedProduct = await repository.updateProduct(id, body);
+
+      // cari index produk yang diedit dan update di list observable
+      final index = products.indexWhere((p) => p.id == id);
+      if (index != -1) {
+        products[index] = updatedProduct;
+        products.refresh(); // trigger UI update
+      }
+    } catch (e) {
+      print('Error editProduct: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }

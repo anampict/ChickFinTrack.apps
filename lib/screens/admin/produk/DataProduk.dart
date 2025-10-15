@@ -11,12 +11,7 @@ class Dataproduk extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Get.put(ProductRepository());
-
-    // Inject controller + repository
-    final ProductController controller = Get.put(
-      ProductController(repository: Get.find()),
-    );
+    final ProductController controller = Get.find<ProductController>();
 
     return Scaffold(
       appBar: AppBar(
