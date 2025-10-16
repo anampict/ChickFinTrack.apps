@@ -12,48 +12,50 @@ class AuthController extends GetxController {
 
   var isLoading = false.obs;
   var isLoggedIn = false.obs;
+  var token = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
-    // Cek token saat app start
-    final token = box.read('token');
-    if (token != null) {
-      isLoggedIn.value = true;
-      // Bisa fetch data awal
-      if (!Get.isRegistered<CategoryController>()) {
-        Get.put(CategoryController(), permanent: true);
-      }
-      print(Get.isRegistered<CategoryController>());
-      Get.find<CategoryController>().fetchCategories();
+    Future.delayed(const Duration(milliseconds: 200), () {
+      final savedToken = box.read('token');
+      if (savedToken != null) {
+        token.value = savedToken;
+        isLoggedIn.value = true;
 
-      if (!Get.isRegistered<ProductController>()) {
-        Get.put(
-          ProductController(repository: ProductRepository()),
-          permanent: true,
-        );
+        if (!Get.isRegistered<CategoryController>()) {
+          Get.put(CategoryController(), permanent: true);
+        }
+        Get.find<CategoryController>().fetchCategories();
+
+        if (!Get.isRegistered<ProductController>()) {
+          Get.put(
+            ProductController(repository: ProductRepository()),
+            permanent: true,
+          );
+        }
+        Get.find<ProductController>().getProducts();
       }
-      Get.find<ProductController>().getProducts();
-    }
+    });
   }
 
-  //login
   Future<void> login(String email, String password) async {
     isLoading.value = true;
     final result = await _authRepository.login(email, password);
     isLoading.value = false;
 
     if (result != null && result['token'] != null) {
-      final token = result['token'];
-      final user = result['user'];
-
-      // Simpan token dan user ke GetStorage
-      box.write('token', token);
-      print(box.read('token'));
-      box.write('user', user);
+      token.value = result['token'];
+      box.write('token', token.value);
+      box.write('user', result['user']);
 
       isLoggedIn.value = true;
+
+      if (!Get.isRegistered<CategoryController>()) {
+        Get.put(CategoryController(), permanent: true);
+      }
       await Get.find<CategoryController>().fetchCategories();
+
       if (!Get.isRegistered<ProductController>()) {
         Get.put(
           ProductController(repository: ProductRepository()),
@@ -61,6 +63,7 @@ class AuthController extends GetxController {
         );
       }
       await Get.find<ProductController>().getProducts();
+
       Get.snackbar('Sukses', 'Login berhasil');
       Get.offAllNamed(AppRoutes.main);
     } else {
@@ -68,15 +71,20 @@ class AuthController extends GetxController {
     }
   }
 
-  //logout
   void logout() {
     box.remove('token');
     box.remove('user');
-
+    token.value = '';
     isLoggedIn.value = false;
 
-    Get.offAllNamed(AppRoutes.loginScreen);
+    if (Get.isRegistered<CategoryController>()) {
+      Get.delete<CategoryController>(force: true);
+    }
+    if (Get.isRegistered<ProductController>()) {
+      Get.delete<ProductController>(force: true);
+    }
 
+    Get.offAllNamed(AppRoutes.loginScreen);
     Get.snackbar(
       'Logout Berhasil',
       'Anda telah keluar dari aplikasi',

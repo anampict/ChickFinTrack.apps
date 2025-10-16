@@ -109,6 +109,22 @@ class Dataproduk extends StatelessWidget {
                   onEdit: () {
                     Get.to(() => TambahProduk(product: product));
                   },
+                  onDelete: () {
+                    Get.defaultDialog(
+                      title: 'Hapus Produk',
+                      middleText: 'Yakin ingin menghapus produk ini?',
+                      textConfirm: 'Hapus',
+                      textCancel: 'Batal',
+                      confirmTextColor: Colors.white,
+                      buttonColor: Colors.red,
+                      onConfirm: () {
+                        Get.back(); // tutup dialog dulu
+                        Future.delayed(const Duration(milliseconds: 300), () {
+                          controller.deleteProduct(product.id);
+                        });
+                      },
+                    );
+                  },
                 ),
               );
             },
@@ -135,6 +151,7 @@ class CardProduk extends StatelessWidget {
   final String imagePath;
   final bool isActive;
   final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const CardProduk({
     super.key,
@@ -145,6 +162,7 @@ class CardProduk extends StatelessWidget {
     required this.isActive,
     required this.imagePath,
     this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -196,6 +214,15 @@ class CardProduk extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      InkWell(
+                        onTap: onDelete,
+                        child: const Icon(
+                          Icons.delete,
+                          color: Colors.red,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       InkWell(
                         onTap: onEdit,
                         child: SvgPicture.asset("assets/icons/edit.svg"),

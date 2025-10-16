@@ -526,7 +526,7 @@ class _TambahProdukState extends State<TambahProduk> {
               child: Row(
                 children: [
                   SizedBox(
-                    width: 79,
+                    width: 100,
                     child: ElevatedButton(
                       onPressed: _submitProduct,
                       style: ElevatedButton.styleFrom(
@@ -536,7 +536,7 @@ class _TambahProdukState extends State<TambahProduk> {
                         ),
                       ),
                       child: Text(
-                        widget.product == null ? "Buat" : "Update",
+                        widget.product == null ? "Buat" : "Simpan",
                         style: const TextStyle(
                           color: Colors.white,
                           fontFamily: "Primary",

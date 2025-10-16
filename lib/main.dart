@@ -12,8 +12,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
   Get.put(AuthController(), permanent: true);
-  Get.put(CategoryController(), permanent: true);
-  Get.put(ProductController(repository: ProductRepository()), permanent: true);
   runApp(const MyApp());
 }
 

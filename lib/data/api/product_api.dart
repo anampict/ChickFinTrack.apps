@@ -82,4 +82,25 @@ class ProductApi {
       throw Exception('Gagal update product');
     }
   }
+
+  // DELETE product
+  static Future<void> deleteProduct(int id) async {
+    final token = box.read('token');
+    final response = await http.delete(
+      Uri.parse('${ApiConfig.baseUrl}/products/$id'),
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      print('Produk dengan ID $id berhasil dihapus');
+    } else {
+      print('Gagal hapus produk: ${response.statusCode} - ${response.body}');
+      throw Exception('${response.statusCode}::${response.body}');
+    }
+  }
 }

@@ -21,4 +21,9 @@ class ProductRepository {
     final data = await ProductApi.updateProduct(id, body);
     return ProductModel.fromJson(data);
   }
+
+  // delete product
+  Future<void> deleteProduct(int id) async {
+    await ProductApi.deleteProduct(id);
+  }
 }
