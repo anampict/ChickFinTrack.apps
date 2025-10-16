@@ -89,45 +89,83 @@ class Dataproduk extends StatelessWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: controller.getProducts, // ✅ fungsi refresh panggil API
-          child: ListView.builder(
-            padding: const EdgeInsets.only(bottom: 80),
-            itemCount: controller.products.length,
-            itemBuilder: (context, index) {
-              final product = controller.products[index];
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                child: CardProduk(
-                  namaProduk: product.name,
-                  kategori: product.category?.name ?? "-",
-                  stok: product.stock,
-                  harga: formatRupiah(product.price),
-                  isActive: product.isActive,
-                  imagePath:
-                      product.imageUrl ??
-                      "assets/images/fotoproduk.png", // fallback jika null
-                  onEdit: () {
-                    Get.to(() => TambahProduk(product: product));
-                  },
-                  onDelete: () {
-                    Get.defaultDialog(
-                      title: 'Hapus Produk',
-                      middleText: 'Yakin ingin menghapus produk ini?',
-                      textConfirm: 'Hapus',
-                      textCancel: 'Batal',
-                      confirmTextColor: Colors.white,
-                      buttonColor: Colors.red,
-                      onConfirm: () {
-                        Get.back(); // tutup dialog dulu
-                        Future.delayed(const Duration(milliseconds: 300), () {
-                          controller.deleteProduct(product.id);
-                        });
-                      },
-                    );
-                  },
-                ),
-              );
+          onRefresh: controller.getProducts,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (scrollInfo) {
+              if (scrollInfo.metrics.pixels ==
+                      scrollInfo.metrics.maxScrollExtent &&
+                  !controller.isLoadMore.value &&
+                  controller.currentPage.value < controller.lastPage.value) {
+                controller.loadMoreProducts();
+              }
+              return false;
             },
+            child: Obx(() {
+              if (controller.isLoading.value && controller.products.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (controller.products.isEmpty) {
+                return const Center(child: Text('Tidak ada produk'));
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.only(bottom: 80),
+                itemCount:
+                    controller.products.length +
+                    (controller.isLoadMore.value
+                        ? 1
+                        : 0), // Tambah 1 buat loader bawah
+                itemBuilder: (context, index) {
+                  // Loader saat pagination
+                  if (index == controller.products.length) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  final product = controller.products[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    child: CardProduk(
+                      namaProduk: product.name,
+                      kategori: product.category?.name ?? "-",
+                      stok: product.stock,
+                      harga: formatRupiah(product.price),
+                      isActive: product.isActive,
+                      imagePath:
+                          product.imageUrl ?? "assets/images/fotoproduk.png",
+                      onEdit: () {
+                        Get.to(() => TambahProduk(product: product));
+                      },
+                      onDelete: () {
+                        Get.defaultDialog(
+                          title: 'Hapus Produk',
+                          middleText: 'Yakin ingin menghapus produk ini?',
+                          textConfirm: 'Hapus',
+                          textCancel: 'Batal',
+                          confirmTextColor: Colors.white,
+                          buttonColor: Colors.red,
+                          onConfirm: () {
+                            Get.back();
+                            Future.delayed(
+                              const Duration(milliseconds: 300),
+                              () {
+                                controller.deleteProduct(product.id);
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  );
+                },
+              );
+            }),
           ),
         );
       }),

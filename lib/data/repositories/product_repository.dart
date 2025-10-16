@@ -3,11 +3,16 @@ import 'package:my_app/data/models/product_model.dart';
 
 class ProductRepository {
   //get product
-  Future<List<ProductModel>> fetchProducts() async {
-    final data = await ProductApi.getProducts(); // <- ini List<dynamic>
-    return data
+  Future<Map<String, dynamic>> fetchProducts({int page = 1}) async {
+    final result = await ProductApi.getProducts(page: page);
+    final products = (result['data'] as List)
         .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
         .toList();
+
+    return {
+      'products': products,
+      'meta': result['meta'], // total, per_page, current_page, last_page
+    };
   }
 
   //add product

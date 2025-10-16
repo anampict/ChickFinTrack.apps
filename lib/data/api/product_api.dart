@@ -7,10 +7,10 @@ class ProductApi {
   static final box = GetStorage();
 
   // get semua produk
-  static Future<List<dynamic>> getProducts() async {
+  static Future<Map<String, dynamic>> getProducts({int page = 1}) async {
     final token = box.read('token');
     final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/products'),
+      Uri.parse('${ApiConfig.baseUrl}/products?page=$page'),
       headers: {
         ...ApiConfig.headers,
         if (token != null) 'Authorization': 'Bearer $token',
@@ -21,8 +21,8 @@ class ProductApi {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
-      print(response.body); // untuk debugging
-      return decoded['data'];
+      print('Response getProducts (page $page): $decoded'); // Debugging
+      return decoded;
     } else {
       throw Exception(
         'Gagal ambil produk: ${response.statusCode} - ${response.body}',

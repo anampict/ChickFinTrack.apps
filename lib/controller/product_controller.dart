@@ -10,18 +10,28 @@ class ProductController extends GetxController {
   var products = <ProductModel>[].obs;
   var isLoading = false.obs;
 
+  // Pagination
+  var currentPage = 1.obs;
+  var lastPage = 1.obs;
+  var isLoadMore = false.obs;
+
   @override
   void onInit() {
     super.onInit();
     getProducts();
   }
 
-  //get product
+  // GET product (page 1)
   Future<void> getProducts() async {
     try {
       isLoading.value = true;
-      final data = await repository.fetchProducts();
-      products.assignAll(data);
+      currentPage.value = 1;
+
+      final response = await repository.fetchProducts(page: currentPage.value);
+      final newProducts = response['products'] as List<ProductModel>;
+      products.assignAll(newProducts);
+
+      lastPage.value = response['meta']['last_page'] ?? 1;
     } catch (e) {
       print('Error getProducts: $e');
     } finally {
@@ -29,13 +39,32 @@ class ProductController extends GetxController {
     }
   }
 
-  //add product
+  // LOAD MORE product (pagination)
+  Future<void> loadMoreProducts() async {
+    if (currentPage.value < lastPage.value && !isLoadMore.value) {
+      try {
+        isLoadMore.value = true;
+        currentPage.value++;
+
+        final response = await repository.fetchProducts(
+          page: currentPage.value,
+        );
+        final newProducts = response['products'] as List<ProductModel>;
+        products.addAll(newProducts);
+      } catch (e) {
+        print('Error loadMoreProducts: $e');
+      } finally {
+        isLoadMore.value = false;
+      }
+    }
+  }
+
+  // ADD product
   Future<void> addProduct(Map<String, dynamic> body) async {
     try {
       isLoading.value = true;
-
       final newProduct = await repository.addProduct(body);
-      products.add(newProduct);
+      products.insert(0, newProduct); // tampil di paling atas
     } catch (e) {
       print('Error addProduct: $e');
     } finally {
@@ -43,17 +72,15 @@ class ProductController extends GetxController {
     }
   }
 
-  //edit product
+  // EDIT product
   Future<void> editProduct(int id, Map<String, dynamic> body) async {
     try {
       isLoading.value = true;
       final updatedProduct = await repository.updateProduct(id, body);
-
-      // cari index produk yang diedit dan update di list observable
       final index = products.indexWhere((p) => p.id == id);
       if (index != -1) {
         products[index] = updatedProduct;
-        products.refresh(); // trigger UI update
+        products.refresh();
       }
     } catch (e) {
       print('Error editProduct: $e');
@@ -62,6 +89,7 @@ class ProductController extends GetxController {
     }
   }
 
+  // DELETE product
   Future<void> deleteProduct(int id) async {
     try {
       isLoading.value = true;

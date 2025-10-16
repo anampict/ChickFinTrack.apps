@@ -191,7 +191,7 @@ class _TambahProdukState extends State<TambahProduk> {
           'Sukses',
           'Produk berhasil diupdate',
           snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green.withOpacity(0.8),
+          backgroundColor: Colors.blue.withOpacity(0.8),
           colorText: Colors.white,
           margin: const EdgeInsets.all(12),
           borderRadius: 8,
