@@ -10,6 +10,8 @@ class ProductController extends GetxController {
   var products = <ProductModel>[].obs;
   var isLoading = false.obs;
 
+  var selectedProduct = Rxn<ProductModel>();
+
   // Pagination
   var currentPage = 1.obs;
   var lastPage = 1.obs;
@@ -56,6 +58,19 @@ class ProductController extends GetxController {
       } finally {
         isLoadMore.value = false;
       }
+    }
+  }
+
+  //get product sesuai id
+  Future<void> getProductById(int id) async {
+    try {
+      isLoading.value = true;
+      final product = await repository.fetchProductById(id);
+      selectedProduct.value = product;
+    } catch (e) {
+      print('Error getProductById: $e');
+    } finally {
+      isLoading.value = false;
     }
   }
 

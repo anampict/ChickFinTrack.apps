@@ -1,9 +1,11 @@
 import 'package:get/get.dart';
+import 'package:my_app/data/models/product_model.dart';
 import 'package:my_app/navigation/MainNavigation.dart';
 import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/SplashScreen.dart';
 import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
 import 'package:my_app/screens/admin/produk/DataProduk.dart';
+import 'package:my_app/screens/admin/produk/DetailProduk.dart';
 import 'package:my_app/screens/admin/produk/TambahKategori.dart';
 import 'package:my_app/screens/admin/produk/DaftarKategoriProduk.dart';
 import 'package:my_app/screens/admin/produk/TambahProduk.dart';
@@ -27,5 +29,7 @@ class AppPages {
     GetPage(name: AppRoutes.TambahKategori, page: () => const Tambahkategori()),
     //tambahproduk
     GetPage(name: AppRoutes.TambahProduk, page: () => const TambahProduk()),
+    //detailproduk
+    GetPage(name: AppRoutes.DetailProduk, page: () => const DetailProduk()),
   ];
 }

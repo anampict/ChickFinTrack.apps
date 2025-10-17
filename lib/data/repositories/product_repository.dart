@@ -15,6 +15,12 @@ class ProductRepository {
     };
   }
 
+  //get product by id
+  Future<ProductModel> fetchProductById(int id) async {
+    final data = await ProductApi.getProductById(id);
+    return ProductModel.fromJson(data);
+  }
+
   //add product
   Future<ProductModel> addProduct(Map<String, dynamic> body) async {
     final data = await ProductApi.createProduct(body);

@@ -30,6 +30,27 @@ class ProductApi {
     }
   }
 
+  //get product sesuai id
+  static Future<Map<String, dynamic>> getProductById(int id) async {
+    final token = box.read('token');
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/products/$id'),
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      return decoded['data']; // sesuai response dari Postman
+    } else {
+      throw Exception('Gagal ambil detail produk: ${response.statusCode}');
+    }
+  }
+
   // create product
   static Future<Map<String, dynamic>> createProduct(
     Map<String, dynamic> body,

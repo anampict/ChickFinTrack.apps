@@ -263,10 +263,7 @@ class _HomescreenState extends State<Homescreen> {
                           "assets/icons/listtransaksi.svg",
                           "List Transaksi",
                         ),
-                        _buildMenu(
-                          "assets/icons/cetakfaktur.svg",
-                          "Cetak Faktur",
-                        ),
+
                         _buildMenu(
                           "assets/icons/manajemanpengguna.svg",
                           "Manajemen Pengguna",

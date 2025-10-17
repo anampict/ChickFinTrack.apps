@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+
+import 'package:intl/intl.dart';
+import 'package:my_app/controller/product_controller.dart';
+import 'package:my_app/data/models/product_model.dart';
+import 'package:my_app/helper/utils.dart';
 
 class DetailProduk extends StatelessWidget {
   const DetailProduk({super.key});
 
+  String formatDate(DateTime date) {
+    return DateFormat('dd/MM/yyyy HH:mm').format(date.toLocal());
+  }
+
   @override
   Widget build(BuildContext context) {
-    final product = {
-      "gambar": "assets/images/fotoproduk.png",
-      "nama": "Test Ayam",
-      "deskripsi": "Ayam segar pilihan terbaik",
-      "stok": "30",
-      "harga": "Rp. 10.000",
-      "sku": "t-01",
-      "kategori": "Ayam Pejantan",
-      "status": "Aktif",
-      "berat": "1000 gr",
-      "dibuat": "25/09/2025 10:27",
-      "diperbarui": "25/09/2025 17:13",
-    };
-
+    final int productId = Get.arguments as int;
+    final ProductController controller = Get.find<ProductController>();
+    // Ambil data produk dari controller
+    final ProductModel product = controller.products.firstWhere(
+      (p) => p.id == productId,
+      orElse: () => throw Exception('Produk tidak ditemukan'),
+    );
     final riwayatStok = [
       {"aksi": "Terjual -1", "admin": "Admin", "tanggal": "10/10/2025 03:57"},
       {"aksi": "Terjual -2", "admin": "Admin", "tanggal": "10/10/2025 03:57"},
@@ -78,13 +81,11 @@ class DetailProduk extends StatelessWidget {
         ],
       ),
 
-      // ================= BODY =================
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ====== PRODUK > DETAIL TEXT ======
             Row(
               children: const [
                 Text(
@@ -112,7 +113,7 @@ class DetailProduk extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
-            // ====== INFORMASI PRODUK ======
+            // INFORMASI PRODUK
             _buildCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,12 +139,19 @@ class DetailProduk extends StatelessWidget {
                       // Gambar Produk
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(
-                          product["gambar"]!,
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                        ),
+                        child: product.imageUrl != null
+                            ? Image.network(
+                                product.imageUrl!,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.asset(
+                                "assets/images/fotoproduk.png",
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              ),
                       ),
                       const SizedBox(width: 10),
 
@@ -154,37 +162,42 @@ class DetailProduk extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              product["nama"]!,
+                              product.name,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
+                                fontFamily: "Primary",
+                                color: Colors.black,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               "Stok Saat Ini",
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: Colors.black,
                                 fontSize: 11,
+                                fontFamily: "Primary",
                               ),
                             ),
                             Text(
-                              product["stok"]!,
+                              product.stock.toString(),
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
+                                fontFamily: "Primary",
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               "Harga",
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: Colors.black,
                                 fontSize: 11,
+                                fontFamily: "Primary",
                               ),
                             ),
                             Text(
-                              product["harga"]!,
+                              formatRupiah(product.price),
                               style: const TextStyle(
                                 color: Colors.green,
                                 fontWeight: FontWeight.w600,
@@ -199,7 +212,7 @@ class DetailProduk extends StatelessWidget {
                       Expanded(
                         flex: 3,
                         child: Text(
-                          product["deskripsi"]!,
+                          product.description ?? "-",
                           style: const TextStyle(
                             fontSize: 11,
                             color: Colors.black87,
@@ -214,7 +227,7 @@ class DetailProduk extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // ====== DETAIL PRODUK ======
+            // DETAIL PRODUK
             _buildCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,29 +237,29 @@ class DetailProduk extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                   ),
                   const SizedBox(height: 8),
-                  _detailRow("SKU", product["sku"]!),
+                  _detailRow("SKU", product.sku),
                   _labelRow(
                     "Kategori",
-                    product["kategori"]!,
+                    product.category?.name ?? "-",
                     Colors.red.shade100,
                     Colors.red.shade800,
                   ),
                   _labelRow(
                     "Status",
-                    product["status"]!,
+                    product.isActive ? "Aktif" : "Nonaktif",
                     Colors.green.shade100,
                     Colors.green.shade800,
                   ),
-                  _detailRow("Berat", product["berat"]!),
-                  _detailRow("Dibuat", product["dibuat"]!),
-                  _detailRow("Diperbarui", product["diperbarui"]!),
+                  _detailRow("Berat", "${product.weight ?? 0} gr"),
+                  _detailRow("Dibuat", formatDate(product.createdAt)),
+                  _detailRow("Diperbarui", formatDate(product.updatedAt)),
                 ],
               ),
             ),
 
             const SizedBox(height: 12),
 
-            // ====== RIWAYAT STOK ======
+            //  RIWAYAT STOK
             _buildCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,8 +369,7 @@ class DetailProduk extends StatelessWidget {
     );
   }
 
-  // ========== COMPONENT KECIL ==========
-
+  //  COMPONENT KECIL
   static Widget _buildCard({required Widget child}) {
     return Container(
       width: double.infinity,
@@ -411,16 +423,13 @@ class DetailProduk extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
-          // Judul
           SizedBox(
-            width: 140, // kasih lebar tetap biar rapi (opsional)
+            width: 140,
             child: Text(
               title,
               style: const TextStyle(fontSize: 12, color: Colors.black54),
             ),
           ),
-
-          // Badge (auto fit panjang teks)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
@@ -442,7 +451,7 @@ class DetailProduk extends StatelessWidget {
   }
 }
 
-//dialog
+// dialog tambah stok
 void showTambahStokDialog(BuildContext context) {
   final TextEditingController stokSaatIniController = TextEditingController();
   final TextEditingController stokDitambahkanController =
@@ -471,7 +480,6 @@ void showTambahStokDialog(BuildContext context) {
                 ),
               ),
               const SizedBox(height: 16),
-
               _inputField(
                 "Stok saat ini",
                 stokSaatIniController,
@@ -490,10 +498,9 @@ void showTambahStokDialog(BuildContext context) {
               const SizedBox(height: 20),
               Row(
                 children: [
-                  // Tombol Restock
                   Expanded(
                     child: SizedBox(
-                      width: 80, // atur sesuai kebutuhan
+                      width: 80,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xffF26D2B),
@@ -516,8 +523,6 @@ void showTambahStokDialog(BuildContext context) {
                     ),
                   ),
                   const SizedBox(width: 10),
-
-                  // Tombol Batal
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
