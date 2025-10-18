@@ -265,7 +265,7 @@ class _HomescreenState extends State<Homescreen> {
                         ),
 
                         _buildMenu(
-                          "assets/icons/manajemanpengguna.svg",
+                          "assets/icons/user.svg",
                           "Manajemen Pengguna",
                         ),
                       ],
