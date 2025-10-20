@@ -1,44 +1,16 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:my_app/controller/users_controller.dart';
+import 'package:my_app/data/models/users_model.dart';
 
 class DaftarPengguna extends StatelessWidget {
   const DaftarPengguna({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> users = [
-      {
-        "name": "Admin",
-        "email": "admin@admin.com",
-        "phone": "085732257048",
-        "role": "Admin",
-      },
-      {
-        "name": "Kurir",
-        "email": "kurir@kurir.com",
-        "phone": "085732257048",
-        "role": "Kurir",
-      },
-      {
-        "name": "Agen 1",
-        "email": "users@users.com",
-        "phone": "085732257048",
-        "role": "Pelanggan",
-      },
-      {
-        "name": "Agen 1",
-        "email": "users@users.com",
-        "phone": "085732257048",
-        "role": "Pelanggan",
-      },
-      {
-        "name": "Agen 1",
-        "email": "users@users.com",
-        "phone": "085732257048",
-        "role": "Pelanggan",
-      },
-    ];
+    final controller = Get.put(UserController());
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -92,115 +64,183 @@ class DaftarPengguna extends StatelessWidget {
         ],
       ),
 
-      // Body halaman daftar pengguna
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Daftar Pengguna",
-              style: TextStyle(
-                fontFamily: "Primary",
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+        child: Obx(() {
+          if (controller.isLoading.value && controller.filteredUsers.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Daftar Pengguna",
+                style: TextStyle(
+                  fontFamily: "Primary",
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-            // Filter tombol
-            Row(
-              children: [
-                _buildFilterButton("Semua", true),
-                const SizedBox(width: 8),
-                _buildFilterButton("Admin", false),
-                const SizedBox(width: 8),
-                _buildFilterButton("Kurir", false),
-                const SizedBox(width: 8),
-                _buildFilterButton("Pelanggan", false),
-              ],
-            ),
-            const SizedBox(height: 15),
-
-            // Daftar user
-            Expanded(
-              child: ListView.builder(
-                itemCount: users.length,
-                itemBuilder: (context, index) {
-                  final user = users[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Card(
-                      color: Colors.white,
-                      elevation: 1,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          radius: 25,
-                          backgroundImage: AssetImage(
-                            "assets/images/image.png",
-                          ),
-                        ),
-                        title: Text(
-                          user["name"],
-                          style: const TextStyle(
-                            fontFamily: "Primary",
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user["email"],
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            Text(
-                              user["phone"],
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                        trailing: Container(
-                          width: 90,
-                          height: 29,
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            user["role"],
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black87,
-                              fontFamily: "Primary",
-                            ),
-                          ),
-                        ),
-                      ),
+              // 🔹 Tombol filter role
+              Obx(
+                () => Row(
+                  children: [
+                    _buildFilterButton(
+                      "Semua",
+                      controller.selectedRole.value == "Semua",
+                      () => controller.filterByRole("Semua"),
                     ),
-                  );
-                },
+                    const SizedBox(width: 8),
+                    _buildFilterButton(
+                      "Admin",
+                      controller.selectedRole.value == "Admin",
+                      () => controller.filterByRole("Admin"),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFilterButton(
+                      "Kurir",
+                      controller.selectedRole.value == "Kurir",
+                      () => controller.filterByRole("Kurir"),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFilterButton(
+                      "Pelanggan",
+                      controller.selectedRole.value == "Pelanggan",
+                      () => controller.filterByRole("Pelanggan"),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 15),
+
+              // Daftar user + swipe refresh + pagination scroll bawah
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: controller.getUsers,
+                  color: const Color(0xffF26D2B),
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (scrollInfo) {
+                      if (scrollInfo.metrics.pixels ==
+                              scrollInfo.metrics.maxScrollExtent &&
+                          !controller.isLoadMore.value &&
+                          controller.currentPage.value <
+                              controller.lastPage.value) {
+                        controller.loadMoreUsers(); //pagination load more
+                      }
+                      return false;
+                    },
+                    child: Obx(() {
+                      final users = controller.filteredUsers; // filter user
+
+                      if (users.isEmpty) {
+                        return ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: const [
+                            SizedBox(height: 200),
+                            Center(child: Text("Tidak ada pengguna")),
+                          ],
+                        );
+                      }
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 80),
+                        itemCount:
+                            users.length +
+                            (controller.isLoadMore.value ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          //Loader pagination di bawah
+                          if (index == users.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+
+                          final UserModel user = users[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Card(
+                              color: Colors.white,
+                              elevation: 1,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  radius: 25,
+                                  backgroundImage: user.avatar != null
+                                      ? NetworkImage(user.avatar!)
+                                      : const AssetImage(
+                                              "assets/images/image.png",
+                                            )
+                                            as ImageProvider,
+                                ),
+                                title: Text(
+                                  user.name,
+                                  style: const TextStyle(
+                                    fontFamily: "Primary",
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      user.email,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    Text(
+                                      user.phone,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                trailing: Container(
+                                  width: 90,
+                                  height: 29,
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    _capitalizeRole(user.role),
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                      fontFamily: "Primary",
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
       ),
 
-      // Tombol tambah (+)
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         backgroundColor: const Color(0xffF26D2B),
@@ -210,22 +250,38 @@ class DaftarPengguna extends StatelessWidget {
   }
 
   // Widget tombol filter
-  Widget _buildFilterButton(String text, bool isActive) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xffF26D2B) : Colors.grey[300],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontFamily: "Primary",
-          color: isActive ? Colors.white : Colors.black87,
-          fontWeight: FontWeight.w500,
-          fontSize: 13,
+  Widget _buildFilterButton(String text, bool isActive, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xffF26D2B) : Colors.grey[300],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontFamily: "Primary",
+            color: isActive ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+          ),
         ),
       ),
     );
+  }
+
+  String _capitalizeRole(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return 'Admin';
+      case 'courier':
+        return 'Kurir';
+      case 'customer':
+        return 'Pelanggan';
+      default:
+        return role;
+    }
   }
 }

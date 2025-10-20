@@ -267,6 +267,7 @@ class _HomescreenState extends State<Homescreen> {
                         _buildMenu(
                           "assets/icons/user.svg",
                           "Manajemen Pengguna",
+                          onTap: () => Get.toNamed(AppRoutes.DaftarPengguna),
                         ),
                       ],
                     ),
