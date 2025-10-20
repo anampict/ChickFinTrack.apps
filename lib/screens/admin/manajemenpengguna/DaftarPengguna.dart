@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/data/models/users_model.dart';
+import 'package:my_app/routes/app_routes.dart';
 
 class DaftarPengguna extends StatelessWidget {
   const DaftarPengguna({super.key});
@@ -242,7 +243,9 @@ class DaftarPengguna extends StatelessWidget {
       ),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Get.toNamed(AppRoutes.TambahPengguna);
+        },
         backgroundColor: const Color(0xffF26D2B),
         child: const Icon(Icons.add, color: Colors.white, size: 30),
       ),

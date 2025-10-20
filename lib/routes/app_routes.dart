@@ -9,4 +9,5 @@ class AppRoutes {
   static const TambahProduk = '/tambahproduk';
   static const DetailProduk = '/detailproduk';
   static const DaftarPengguna = '/daftarpengguna';
+  static const TambahPengguna = '/tambahpengguna';
 }
