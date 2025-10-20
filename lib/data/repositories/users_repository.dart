@@ -15,4 +15,11 @@ class UserRepository {
 
     return {'users': users, 'last_page': lastPage};
   }
+
+  // tambah pengguna
+  Future<UserModel> createUser(Map<String, dynamic> data) async {
+    final result = await UserApi.createUser(data);
+    final userData = result['data'];
+    return UserModel.fromJson(userData);
+  }
 }

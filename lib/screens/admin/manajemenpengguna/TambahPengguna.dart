@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:my_app/controller/users_controller.dart';
 
 class Tambahpengguna extends StatelessWidget {
   const Tambahpengguna({super.key});
@@ -18,7 +20,13 @@ class Tambahpengguna extends StatelessWidget {
           "${DateTime.now().year} ${TimeOfDay.now().format(context)}",
     );
 
-    String? selectedRole = 'Pelanggan';
+    final List<Map<String, String>> roles = [
+      {'key': 'admin', 'label': 'Admin'},
+      {'key': 'courier', 'label': 'Kurir'},
+      {'key': 'customer', 'label': 'Pelanggan'},
+    ];
+
+    String? selectedRole = 'customer';
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -134,14 +142,15 @@ class Tambahpengguna extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     child: DropdownButtonFormField<String>(
                       value: selectedRole,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Pelanggan',
-                          child: Text('Pelanggan'),
-                        ),
-                        DropdownMenuItem(value: 'Admin', child: Text('Admin')),
-                      ],
-                      onChanged: (val) {},
+                      items: roles.map((role) {
+                        return DropdownMenuItem<String>(
+                          value: role['key'],
+                          child: Text(role['label']!),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        selectedRole = val;
+                      },
                       decoration: InputDecoration(
                         labelText: "Peran",
                         filled: true,
@@ -222,7 +231,22 @@ class Tambahpengguna extends StatelessWidget {
                   height: 35,
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: Submit form
+                      final body = {
+                        "name": namaController.text,
+                        "other_name": namaWarungController.text.isEmpty
+                            ? null
+                            : namaWarungController.text,
+                        "email": emailController.text,
+                        "password": passwordController.text,
+                        "role":
+                            selectedRole, // 'admin' / 'courier' / 'customer'
+                        "phone": teleponController.text.isEmpty
+                            ? null
+                            : teleponController.text,
+                      };
+
+                      final userController = Get.find<UserController>();
+                      userController.createUser(body);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xffF26D2B),
@@ -278,7 +302,6 @@ class Tambahpengguna extends StatelessWidget {
   }) {
     return StatefulBuilder(
       builder: (context, setState) {
-        bool isObscure = obscureText;
         return Material(
           elevation: 2,
           shadowColor: Colors.black26,
@@ -286,7 +309,7 @@ class Tambahpengguna extends StatelessWidget {
           child: TextFormField(
             controller: controller,
             keyboardType: keyboardType,
-            obscureText: isObscure,
+            obscureText: obscureText,
             decoration: InputDecoration(
               labelText: label,
               filled: true,
@@ -294,11 +317,11 @@ class Tambahpengguna extends StatelessWidget {
               suffixIcon: withEye
                   ? IconButton(
                       icon: Icon(
-                        isObscure ? Icons.visibility_off : Icons.visibility,
+                        obscureText ? Icons.visibility_off : Icons.visibility,
                       ),
                       onPressed: () {
                         setState(() {
-                          isObscure = !isObscure;
+                          obscureText = !obscureText;
                         });
                       },
                     )

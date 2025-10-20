@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:my_app/data/models/users_model.dart';
 import 'package:my_app/data/repositories/users_repository.dart';
@@ -14,6 +15,7 @@ class UserController extends GetxController {
   var currentPage = 1.obs;
   var lastPage = 1.obs;
   var selectedRole = 'Semua'.obs;
+  var isSubmitting = false.obs;
 
   @override
   void onInit() {
@@ -40,7 +42,7 @@ class UserController extends GetxController {
     }
   }
 
-  // 🔹 Pagination (load more)
+  // Pagination (load more)
   Future<void> loadMoreUsers() async {
     if (isLoadMore.value || currentPage.value >= lastPage.value) return;
 
@@ -66,7 +68,7 @@ class UserController extends GetxController {
     _applyFilter();
   }
 
-  // 🔹 Terapkan filter berdasarkan role terpilih
+  // Terapkan filter berdasarkan role terpilih
   void _applyFilter() {
     if (selectedRole.value == 'Semua') {
       filteredUsers.assignAll(users);
@@ -77,7 +79,7 @@ class UserController extends GetxController {
     }
   }
 
-  // 🔹 Mapping role dari API ke label UI
+  // Mapping role dari API ke label UI
   String _roleLabel(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
@@ -88,6 +90,36 @@ class UserController extends GetxController {
         return 'Pelanggan';
       default:
         return role;
+    }
+  }
+
+  // Tambah user
+  Future<void> createUser(Map<String, dynamic> body) async {
+    try {
+      isSubmitting.value = true;
+      final newUser = await _repository.createUser(body);
+
+      users.insert(0, newUser);
+      _applyFilter();
+
+      Get.back(); // tutup form
+      Get.snackbar(
+        'Sukses',
+        'User berhasil ditambahkan',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isSubmitting.value = false;
     }
   }
 }
