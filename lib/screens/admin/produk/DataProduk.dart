@@ -218,6 +218,7 @@ class CardProduk extends StatelessWidget {
         12,
       ), // biar efek ripple ngikutin bentuk card
       child: Card(
+        color: Colors.white,
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(

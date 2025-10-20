@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:my_app/controller/auth_controller.dart';
+import 'package:my_app/screens/admin/manajemenpengguna/DaftarPengguna.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
 
@@ -23,8 +24,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      initialRoute: AppRoutes.SplashScreen,
-      getPages: AppPages.pages,
+      // initialRoute: AppRoutes.SplashScreen,
+      // getPages: AppPages.pages,
+      home: const DaftarPengguna(),
     );
   }
 }
