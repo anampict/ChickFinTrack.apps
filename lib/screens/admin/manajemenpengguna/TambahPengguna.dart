@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:my_app/controller/users_controller.dart';
 
 class Tambahpengguna extends StatelessWidget {
