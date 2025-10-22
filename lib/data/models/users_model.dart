@@ -6,6 +6,8 @@ class UserModel {
   final String role;
   final String phone;
   final String? avatar;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   UserModel({
     required this.id,
@@ -15,6 +17,8 @@ class UserModel {
     required this.role,
     required this.phone,
     this.avatar,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class UserModel {
       role: json['role'] ?? '',
       phone: json['phone'] ?? '',
       avatar: json['avatar'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
     );
   }
 }

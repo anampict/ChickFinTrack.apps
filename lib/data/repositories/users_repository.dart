@@ -22,4 +22,11 @@ class UserRepository {
     final userData = result['data'];
     return UserModel.fromJson(userData);
   }
+
+  //get user by id
+  Future<UserModel> getUserById(int id) async {
+    final data = await UserApi.getUserById(id);
+    final userData = data['data'];
+    return UserModel.fromJson(userData);
+  }
 }

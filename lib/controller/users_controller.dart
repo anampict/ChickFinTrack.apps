@@ -17,6 +17,9 @@ class UserController extends GetxController {
   var selectedRole = 'Semua'.obs;
   var isSubmitting = false.obs;
 
+  var userDetail = Rxn<UserModel>(); // Rxn artinya bisa null
+  var isDetailLoading = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -120,6 +123,24 @@ class UserController extends GetxController {
       );
     } finally {
       isSubmitting.value = false;
+    }
+  }
+
+  Future<void> getUserDetail(int id) async {
+    try {
+      isDetailLoading.value = true;
+      final result = await _repository.getUserById(id);
+      userDetail.value = result;
+    } catch (e) {
+      print('Error fetch user detail: $e');
+      Get.snackbar(
+        'Error',
+        'Gagal memuat detail pengguna',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isDetailLoading.value = false;
     }
   }
 }

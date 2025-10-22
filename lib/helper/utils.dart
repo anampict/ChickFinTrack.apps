@@ -8,3 +8,9 @@ String formatRupiah(num value) {
     decimalDigits: 0,
   ).format(value);
 }
+
+//for date formatting
+String formatTanggal(DateTime? date) {
+  if (date == null) return "-";
+  return DateFormat('dd/MM/yyyy, HH:mm').format(date);
+}

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/data/models/users_model.dart';
 import 'package:my_app/routes/app_routes.dart';
+import 'package:my_app/screens/admin/manajemenpengguna/DetailPengguna.dart';
 
 class DaftarPengguna extends StatelessWidget {
   const DaftarPengguna({super.key});
@@ -85,7 +84,7 @@ class DaftarPengguna extends StatelessWidget {
               ),
               const SizedBox(height: 10),
 
-              // 🔹 Tombol filter role
+              // Tombol filter role
               Obx(
                 () => Row(
                   children: [
@@ -163,68 +162,75 @@ class DaftarPengguna extends StatelessWidget {
                           final UserModel user = users[index];
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 10),
-                            child: Card(
-                              color: Colors.white,
-                              elevation: 1,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  radius: 25,
-                                  backgroundImage: user.avatar != null
-                                      ? NetworkImage(user.avatar!)
-                                      : const AssetImage(
-                                              "assets/images/image.png",
-                                            )
-                                            as ImageProvider,
+                            child: InkWell(
+                              onTap: () {
+                                Get.to(() => Detailpengguna(userId: user.id));
+                              },
+                              borderRadius: BorderRadius.circular(10),
+                              child: Card(
+                                color: Colors.white,
+                                elevation: 1,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                title: Text(
-                                  user.name,
-                                  style: const TextStyle(
-                                    fontFamily: "Primary",
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    radius: 25,
+                                    backgroundImage: user.avatar != null
+                                        ? NetworkImage(user.avatar!)
+                                        : const AssetImage(
+                                                "assets/images/image.png",
+                                              )
+                                              as ImageProvider,
                                   ),
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      user.email,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    Text(
-                                      user.phone,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                trailing: Container(
-                                  width: 90,
-                                  height: 29,
-                                  alignment: Alignment.center,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[200],
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    _capitalizeRole(user.role),
-                                    textAlign: TextAlign.center,
+                                  title: Text(
+                                    user.name,
                                     style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
                                       fontFamily: "Primary",
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        user.email,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      Text(
+                                        user.phone,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: Container(
+                                    width: 90,
+                                    height: 29,
+                                    alignment: Alignment.center,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      _capitalizeRole(user.role),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black87,
+                                        fontFamily: "Primary",
+                                      ),
                                     ),
                                   ),
                                 ),

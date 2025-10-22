@@ -46,4 +46,24 @@ class UserApi {
       throw Exception('Gagal menambah user: ${response.body}');
     }
   }
+
+  // user_api.dart
+  static Future<Map<String, dynamic>> getUserById(int id) async {
+    final box = GetStorage();
+    final token = box.read('token');
+
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/users/$id'),
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Gagal memuat detail user: ${response.body}');
+    }
+  }
 }
