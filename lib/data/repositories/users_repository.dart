@@ -29,4 +29,11 @@ class UserRepository {
     final userData = data['data'];
     return UserModel.fromJson(userData);
   }
+
+  // update user
+  Future<UserModel> updateUser(int id, Map<String, dynamic> data) async {
+    final result = await UserApi.updateUser(id, data);
+    final userData = result['data'];
+    return UserModel.fromJson(userData);
+  }
 }

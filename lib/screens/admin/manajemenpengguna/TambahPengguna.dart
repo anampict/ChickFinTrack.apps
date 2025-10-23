@@ -1,31 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:my_app/controller/users_controller.dart';
+import 'package:my_app/data/models/users_model.dart';
 
-class Tambahpengguna extends StatelessWidget {
-  const Tambahpengguna({super.key});
+class Tambahpengguna extends StatefulWidget {
+  const Tambahpengguna({super.key, this.userId});
+  final int? userId;
+
+  @override
+  State<Tambahpengguna> createState() => _TambahpenggunaState();
+}
+
+class _TambahpenggunaState extends State<Tambahpengguna> {
+  final userController = Get.find<UserController>();
+
+  final namaController = TextEditingController();
+  final namaWarungController = TextEditingController();
+  final emailController = TextEditingController();
+  final teleponController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  String? selectedRole = 'customer';
+  bool isEditMode = false;
+  UserModel? editUser;
+
+  @override
+  void initState() {
+    super.initState();
+    print('USER ID DITERIMA: ${widget.userId}');
+
+    // Ambil argumen user (kalau ada)
+    final args = Get.arguments;
+    if (args != null && args['user'] != null) {
+      editUser = args['user'];
+      isEditMode = true;
+
+      // isi form langsung
+      namaController.text = editUser?.name ?? '';
+      namaWarungController.text = editUser?.otherName ?? '';
+      emailController.text = editUser?.email ?? '';
+      teleponController.text = editUser?.phone ?? '';
+      selectedRole = editUser?.role ?? 'customer';
+    }
+  }
+
+  @override
+  void dispose() {
+    namaController.dispose();
+    namaWarungController.dispose();
+    emailController.dispose();
+    teleponController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController namaController = TextEditingController();
-    final TextEditingController namaWarungController = TextEditingController();
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController teleponController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-    final TextEditingController tanggalController = TextEditingController(
-      text:
-          "${DateTime.now().day.toString().padLeft(2, '0')}/"
-          "${DateTime.now().month.toString().padLeft(2, '0')}/"
-          "${DateTime.now().year} ${TimeOfDay.now().format(context)}",
-    );
-
-    final List<Map<String, String>> roles = [
+    final roles = [
       {'key': 'admin', 'label': 'Admin'},
       {'key': 'courier', 'label': 'Kurir'},
       {'key': 'customer', 'label': 'Pelanggan'},
     ];
-
-    String? selectedRole = 'customer';
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -41,9 +76,9 @@ class Tambahpengguna extends StatelessWidget {
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  "Selamat Malam",
+              children: [
+                const Text(
+                  "Selamat Datang",
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 9,
@@ -52,8 +87,8 @@ class Tambahpengguna extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "Admin RPA",
-                  style: TextStyle(
+                  isEditMode ? "Edit Pengguna" : "Tambah Pengguna",
+                  style: const TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.w500,
                     fontSize: 9,
@@ -78,218 +113,147 @@ class Tambahpengguna extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text(
-                  "Pengguna",
-                  style: TextStyle(
-                    fontFamily: "Primary",
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(width: 3),
-                const Icon(Icons.chevron_right, color: Colors.grey),
-                const SizedBox(width: 3),
-                Text(
-                  "Tambah",
-                  style: const TextStyle(
-                    fontFamily: "Primary",
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _materialTextField("Nama", namaController),
-            const SizedBox(height: 15),
-            _materialTextField("Nama Warung", namaWarungController),
-            const SizedBox(height: 15),
-            _materialTextField(
-              "Alamat Email",
-              emailController,
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 15),
-            _materialTextField(
-              "Telepon",
-              teleponController,
-              keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 15),
-            _materialTextField(
-              "Kata Sandi",
-              passwordController,
-              obscureText: true,
-              withEye: true,
-            ),
-            const SizedBox(height: 15),
-            Row(
-              children: [
-                Expanded(
-                  child: Material(
-                    elevation: 2,
-                    shadowColor: Colors.black26,
-                    borderRadius: BorderRadius.circular(8),
-                    child: DropdownButtonFormField<String>(
-                      value: selectedRole,
-                      items: roles.map((role) {
-                        return DropdownMenuItem<String>(
-                          value: role['key'],
-                          child: Text(role['label']!),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        selectedRole = val;
-                      },
-                      decoration: InputDecoration(
-                        labelText: "Peran",
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Material(
-                    elevation: 2,
-                    shadowColor: Colors.black26,
-                    borderRadius: BorderRadius.circular(8),
-                    child: TextFormField(
-                      controller: tanggalController,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                        labelText: "Tanggal Pembuatan",
-                        filled: true,
-                        fillColor: Colors.white,
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.calendar_today),
-                          onPressed: () async {
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime(2100),
-                            );
-                            if (date != null) {
-                              final time = await showTimePicker(
-                                context: context,
-                                initialTime: TimeOfDay.now(),
-                              );
-                              final selectedDateTime = DateTime(
-                                date.year,
-                                date.month,
-                                date.day,
-                                time?.hour ?? 0,
-                                time?.minute ?? 0,
-                              );
-                              tanggalController.text =
-                                  "${selectedDateTime.day.toString().padLeft(2, '0')}/"
-                                  "${selectedDateTime.month.toString().padLeft(2, '0')}/"
-                                  "${selectedDateTime.year} "
-                                  "${TimeOfDay.fromDateTime(selectedDateTime).format(context)}";
-                            }
-                          },
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 25),
-            Row(
-              children: [
-                SizedBox(
-                  width: 80,
-                  height: 35,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final body = {
-                        "name": namaController.text,
-                        "other_name": namaWarungController.text.isEmpty
-                            ? null
-                            : namaWarungController.text,
-                        "email": emailController.text,
-                        "password": passwordController.text,
-                        "role":
-                            selectedRole, // 'admin' / 'courier' / 'customer'
-                        "phone": teleponController.text.isEmpty
-                            ? null
-                            : teleponController.text,
-                      };
+      body: Obx(() {
+        if (userController.isSubmitting.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-                      final userController = Get.find<UserController>();
-                      userController.createUser(body);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xffF26D2B),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: EdgeInsets
-                          .zero, // penting biar ukuran sesuai SizedBox
-                    ),
-                    child: const Text(
-                      "Buat",
-                      style: TextStyle(color: Colors.white, fontSize: 14),
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    "Pengguna",
+                    style: TextStyle(
+                      fontFamily: "Primary",
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      color: Colors.black,
                     ),
                   ),
+                  const SizedBox(width: 3),
+                  const Icon(Icons.chevron_right, color: Colors.grey),
+                  const SizedBox(width: 3),
+                  Text(
+                    isEditMode ? "Edit" : "Tambah",
+                    style: const TextStyle(
+                      fontFamily: "Primary",
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _materialTextField("Nama", namaController),
+              const SizedBox(height: 15),
+              _materialTextField("Nama Warung", namaWarungController),
+              const SizedBox(height: 15),
+              _materialTextField("Alamat Email", emailController),
+              const SizedBox(height: 15),
+              _materialTextField("Telepon", teleponController),
+              const SizedBox(height: 15),
+
+              if (!isEditMode)
+                _materialTextField(
+                  "Kata Sandi",
+                  passwordController,
+                  obscureText: true,
+                  withEye: true,
                 ),
 
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 80,
-                  height: 35,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      navigator!.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: EdgeInsets
-                          .zero, // penting biar ukuran sesuai SizedBox
-                    ),
-                    child: const Text(
-                      "Batal",
-                      style: TextStyle(color: Colors.black, fontSize: 14),
-                    ),
+              const SizedBox(height: 15),
+              DropdownButtonFormField<String>(
+                value: selectedRole,
+                items: roles.map((role) {
+                  return DropdownMenuItem<String>(
+                    value: role['key'],
+                    child: Text(role['label']!),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  setState(() => selectedRole = val);
+                },
+                decoration: InputDecoration(
+                  labelText: "Peran",
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
-      ),
+              ),
+              const SizedBox(height: 25),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 100,
+                    height: 40,
+                    child: ElevatedButton(
+                      onPressed: _onSubmit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xffF26D2B),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        isEditMode ? "Simpan" : "Buat",
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 90,
+                    height: 40,
+                    child: ElevatedButton(
+                      onPressed: () => Get.back(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        "Batal",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }),
     );
+  }
+
+  void _onSubmit() {
+    final body = {
+      "name": namaController.text,
+      "other_name": namaWarungController.text,
+      "email": emailController.text,
+      "role": selectedRole,
+      "phone": teleponController.text,
+    };
+
+    if (isEditMode) {
+      userController.updateUser(editUser!.id!, body);
+    } else {
+      body["password"] = passwordController.text;
+      userController.createUser(body);
+    }
   }
 
   Widget _materialTextField(
@@ -297,18 +261,18 @@ class Tambahpengguna extends StatelessWidget {
     TextEditingController controller, {
     bool obscureText = false,
     bool withEye = false,
-    TextInputType keyboardType = TextInputType.text,
   }) {
+    bool isObscure = obscureText; // 🔹 Pindah ke luar builder
+
     return StatefulBuilder(
-      builder: (context, setState) {
+      builder: (context, setFieldState) {
         return Material(
           elevation: 2,
           shadowColor: Colors.black26,
           borderRadius: BorderRadius.circular(8),
           child: TextFormField(
             controller: controller,
-            keyboardType: keyboardType,
-            obscureText: obscureText,
+            obscureText: isObscure,
             decoration: InputDecoration(
               labelText: label,
               filled: true,
@@ -316,13 +280,11 @@ class Tambahpengguna extends StatelessWidget {
               suffixIcon: withEye
                   ? IconButton(
                       icon: Icon(
-                        obscureText ? Icons.visibility_off : Icons.visibility,
+                        isObscure ? Icons.visibility_off : Icons.visibility,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          obscureText = !obscureText;
-                        });
-                      },
+                      onPressed: () => setFieldState(() {
+                        isObscure = !isObscure; // ✅ toggle dengan benar
+                      }),
                     )
                   : null,
               border: OutlineInputBorder(

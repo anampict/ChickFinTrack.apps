@@ -127,20 +127,58 @@ class UserController extends GetxController {
   }
 
   Future<void> getUserDetail(int id) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        isDetailLoading.value = true;
+
+        final result = await _repository.getUserById(id);
+        userDetail.value = result;
+      } catch (e) {
+        print('Error fetch user detail: $e');
+        Get.snackbar(
+          'Error',
+          'Gagal memuat detail pengguna',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      } finally {
+        isDetailLoading.value = false;
+      }
+    });
+  }
+
+  // Update user
+  Future<void> updateUser(int id, Map<String, dynamic> body) async {
     try {
-      isDetailLoading.value = true;
-      final result = await _repository.getUserById(id);
-      userDetail.value = result;
+      isSubmitting.value = true;
+
+      final updatedUser = await _repository.updateUser(id, body);
+
+      // update list user di memori agar tampilan langsung berubah
+      final index = users.indexWhere((u) => u.id == id);
+      if (index != -1) {
+        users[index] = updatedUser;
+        _applyFilter();
+      }
+
+      Get.back(); // tutup form
+      Get.snackbar(
+        'Sukses',
+        'User berhasil diperbarui',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
     } catch (e) {
-      print('Error fetch user detail: $e');
       Get.snackbar(
         'Error',
-        'Gagal memuat detail pengguna',
+        e.toString(),
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
     } finally {
-      isDetailLoading.value = false;
+      isSubmitting.value = false;
     }
   }
 }

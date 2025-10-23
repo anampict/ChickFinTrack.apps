@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/data/models/product_model.dart';
 import 'package:my_app/navigation/MainNavigation.dart';
 import 'package:my_app/routes/app_routes.dart';
@@ -36,6 +37,12 @@ class AppPages {
     //daftarpengguna
     GetPage(name: AppRoutes.DaftarPengguna, page: () => const DaftarPengguna()),
     //tambahpengguna
-    GetPage(name: AppRoutes.TambahPengguna, page: () => const Tambahpengguna()),
+    GetPage(
+      name: AppRoutes.TambahPengguna,
+      page: () => const Tambahpengguna(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<UserController>(() => UserController());
+      }),
+    ),
   ];
 }

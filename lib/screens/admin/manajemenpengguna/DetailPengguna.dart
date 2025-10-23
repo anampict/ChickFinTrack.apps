@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/helper/utils.dart';
+import 'package:my_app/routes/app_routes.dart';
+import 'package:my_app/screens/admin/manajemenpengguna/TambahPengguna.dart';
 
 class Detailpengguna extends StatelessWidget {
   final int userId;
@@ -115,7 +115,14 @@ class Detailpengguna extends StatelessWidget {
                     width: 55,
                     height: 30,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Get.toNamed(
+                          AppRoutes.TambahPengguna,
+                          arguments: {'user': user},
+                        )!.then((_) {
+                          userController.getUserDetail(user.id);
+                        });
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xffF26D2B),
                         shape: RoundedRectangleBorder(
