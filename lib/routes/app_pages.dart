@@ -5,6 +5,7 @@ import 'package:my_app/navigation/MainNavigation.dart';
 import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/SplashScreen.dart';
 import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
+import 'package:my_app/screens/admin/buatpesanan/DaftarPesanan.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/DaftarPengguna.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/TambahPengguna.dart';
 import 'package:my_app/screens/admin/produk/DataProduk.dart';
@@ -27,6 +28,7 @@ class AppPages {
     //dataproduk
     GetPage(name: AppRoutes.DataProduk, page: () => const Dataproduk()),
     //pesanan
+    GetPage(name: AppRoutes.DaftarPesanan, page: () => const Daftarpesanan()),
     GetPage(name: AppRoutes.Pesanan, page: () => const Buatpesanan()),
     //tambahkategori
     GetPage(name: AppRoutes.TambahKategori, page: () => const Tambahkategori()),

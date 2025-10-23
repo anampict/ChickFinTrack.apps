@@ -256,7 +256,7 @@ class _HomescreenState extends State<Homescreen> {
                           "assets/icons/pesanan.svg",
                           "Pesanan",
                           onTap: () {
-                            Get.toNamed(AppRoutes.Pesanan);
+                            Get.toNamed(AppRoutes.DaftarPesanan);
                           },
                         ),
                         _buildMenu(
