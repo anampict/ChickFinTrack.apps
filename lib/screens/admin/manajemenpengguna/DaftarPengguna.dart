@@ -120,7 +120,6 @@ class DaftarPengguna extends StatelessWidget {
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: controller.getUsers,
-                  color: const Color(0xffF26D2B),
                   child: NotificationListener<ScrollNotification>(
                     onNotification: (scrollInfo) {
                       if (scrollInfo.metrics.pixels ==

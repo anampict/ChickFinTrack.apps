@@ -3,10 +3,18 @@ import 'package:my_app/data/models/order_model.dart';
 
 class OrderRepository {
   // get semua order
-  Future<List<OrderModel>> getAllOrders() async {
-    final data = await OrderApi.getOrders();
-    print("Data order dari API: $data");
-    return (data as List).map((e) => OrderModel.fromJson(e)).toList();
+  Future<Map<String, dynamic>> fetchOrders({int page = 1}) async {
+    final result = await OrderApi.getOrders(page: page);
+
+    final orders = (result['data'] as List)
+        .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    return {
+      'orders': orders,
+      'pagination':
+          result['pagination'], // total, per_page, current_page, last_page
+    };
   }
 
   // get detail order

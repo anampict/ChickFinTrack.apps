@@ -5,13 +5,13 @@ import '../api/api_config.dart';
 
 class OrderApi {
   // get semua order
-  static Future<List<dynamic>> getOrders() async {
+  static Future<Map<String, dynamic>> getOrders({int page = 1}) async {
     final box = GetStorage();
     final token = box.read('token');
 
     final response = await http.get(
       Uri.parse(
-        '${ApiConfig.baseUrl}/order?with_items=true&with_histories=true',
+        '${ApiConfig.baseUrl}/order?with_items=true&with_histories=true&page=$page',
       ),
       headers: {
         ...ApiConfig.headers,
@@ -21,8 +21,12 @@ class OrderApi {
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
-      print(response.body);
-      return decoded['data'];
+      print('Response OrderAPI (page $page): $decoded');
+
+      return {
+        'data': decoded['data'] ?? [],
+        'pagination': decoded['pagination'] ?? {},
+      };
     } else {
       throw Exception(
         'Gagal ambil data order: ${response.statusCode} - ${response.body}',

@@ -101,29 +101,6 @@ class CourierModel {
   );
 }
 
-class PaginationModel {
-  final int total;
-  final int perPage;
-  final int currentPage;
-  final int lastPage;
-
-  PaginationModel({
-    required this.total,
-    required this.perPage,
-    required this.currentPage,
-    required this.lastPage,
-  });
-
-  factory PaginationModel.fromJson(Map<String, dynamic> json) {
-    return PaginationModel(
-      total: json['total'] ?? 0,
-      perPage: json['per_page'] ?? 0,
-      currentPage: json['current_page'] ?? 1,
-      lastPage: json['last_page'] ?? 1,
-    );
-  }
-}
-
 class OrderItemModel {
   final int id;
   final int productId;
