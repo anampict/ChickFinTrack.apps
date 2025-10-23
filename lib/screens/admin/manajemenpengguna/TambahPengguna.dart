@@ -262,7 +262,7 @@ class _TambahpenggunaState extends State<Tambahpengguna> {
     bool obscureText = false,
     bool withEye = false,
   }) {
-    bool isObscure = obscureText; // 🔹 Pindah ke luar builder
+    bool isObscure = obscureText; //Pindah ke luar builder
 
     return StatefulBuilder(
       builder: (context, setFieldState) {
@@ -283,7 +283,7 @@ class _TambahpenggunaState extends State<Tambahpengguna> {
                         isObscure ? Icons.visibility_off : Icons.visibility,
                       ),
                       onPressed: () => setFieldState(() {
-                        isObscure = !isObscure; // ✅ toggle dengan benar
+                        isObscure = !isObscure; //toggle dengan benar
                       }),
                     )
                   : null,
