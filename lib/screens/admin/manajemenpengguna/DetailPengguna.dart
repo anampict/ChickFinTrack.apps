@@ -16,6 +16,7 @@ class Detailpengguna extends StatelessWidget {
 
     // panggil data detail user ketika halaman dibuka
     userController.getUserDetail(userId);
+    print('Memuat detail pengguna dengan ID: $userId');
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -390,7 +391,7 @@ class _AlamatTab extends StatelessWidget {
 
       return Column(
         children: [
-          // 🔹 Header + Tombol Tambah
+          // Header + Tombol Tambah
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -431,7 +432,7 @@ class _AlamatTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // 🔹 List alamat
+          // List alamat
           Expanded(
             child: ListView.builder(
               itemCount: user.addresses.length,
@@ -452,7 +453,7 @@ class _AlamatTab extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 🔸 Nama + label Utama
+                          // Nama + label Utama
                           Row(
                             children: [
                               Text(
@@ -487,7 +488,7 @@ class _AlamatTab extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
 
-                          // 🔸 Alamat dan tombol edit/hapus
+                          // Alamat dan tombol edit/hapus
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

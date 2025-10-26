@@ -5,6 +5,7 @@ import 'package:my_app/controller/auth_controller.dart';
 import 'package:my_app/screens/admin/buatpesanan/DaftarPesanan.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/DaftarPengguna.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/DetailPengguna.dart';
+import 'package:my_app/screens/admin/manajemenpengguna/TambahAlamat.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
 
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: AppRoutes.SplashScreen,
       getPages: AppPages.pages,
-      // home: const Detailpengguna(userId: 24),
+      // home: const Tambahalamat(),
     );
   }
 }
