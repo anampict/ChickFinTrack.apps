@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: AppRoutes.SplashScreen,
       getPages: AppPages.pages,
-      // home: const Daftarpesanan(),
+      // home: const Detailpengguna(userId: 24),
     );
   }
 }
