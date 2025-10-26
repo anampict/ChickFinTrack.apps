@@ -368,188 +368,206 @@ class _InfoItem extends StatelessWidget {
 
 // ============ TAB ALAMAT ============
 class _AlamatTab extends StatelessWidget {
-  final List<Map<String, dynamic>> dummyAlamat = [
-    {
-      "nama": "Muhib",
-      "alamat": "Jln kluwut utara, kec wonorejo, kab pasuruan 67173",
-      "telepon": "086728382022",
-      "utama": true,
-    },
-    {
-      "nama": "Muhib",
-      "alamat": "Jln kluwut utara, kec wonorejo, kab pasuruan 67173",
-      "telepon": "086728382022",
-      "utama": false,
-    },
-    {
-      "nama": "Muhib",
-      "alamat": "Jln kluwut utara, kec wonorejo, kab pasuruan 67173",
-      "telepon": "086728382022",
-      "utama": false,
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              "Daftar Alamat",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                fontFamily: "Primary",
-                color: Colors.black,
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // TODO: Tambah alamat
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xffF26D2B),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                "Tambah",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: "Primary",
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: ListView.builder(
-            itemCount: dummyAlamat.length,
-            itemBuilder: (context, index) {
-              final item = dummyAlamat[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Material(
-                  elevation: 1,
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              item['nama'],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            if (item['utama'])
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.red[400],
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  "Utama",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
+    final userController = Get.find<UserController>();
 
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item['alamat'],
-                                    style: const TextStyle(fontSize: 11.5),
+    return Obx(() {
+      final user = userController.userDetail.value;
+
+      if (user == null || user.addresses.isEmpty) {
+        return const Center(
+          child: Text(
+            "Belum ada alamat tersimpan",
+            style: TextStyle(
+              fontFamily: "Primary",
+              fontSize: 13,
+              color: Colors.grey,
+            ),
+          ),
+        );
+      }
+
+      return Column(
+        children: [
+          // 🔹 Header + Tombol Tambah
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Daftar Alamat",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  fontFamily: "Primary",
+                  color: Colors.black,
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  // TODO: Tambah alamat
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xffF26D2B),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  "Tambah",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: "Primary",
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // 🔹 List alamat
+          Expanded(
+            child: ListView.builder(
+              itemCount: user.addresses.length,
+              itemBuilder: (context, index) {
+                final alamat = user.addresses[index];
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Material(
+                    elevation: 1,
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 🔸 Nama + label Utama
+                          Row(
+                            children: [
+                              Text(
+                                alamat.shippingName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  fontFamily: "Primary",
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              if (alamat.isDefault)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    item['telepon'],
-                                    style: const TextStyle(fontSize: 11.5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red[400],
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    "Utama",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+
+                          // 🔸 Alamat dan tombol edit/hapus
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "${alamat.addressLine1}, ${alamat.city ?? ''} ${alamat.postalCode ?? ''}",
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontFamily: "Primary",
+                                      ),
+                                    ),
+                                    if (alamat.addressLine2?.isNotEmpty ??
+                                        false)
+                                      Text(
+                                        alamat.addressLine2!,
+                                        style: const TextStyle(fontSize: 11.5),
+                                      ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      user.phone,
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontFamily: "Primary",
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // 🔸 Tombol aksi
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      // TODO: aksi hapus
+                                    },
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(2),
+                                      child: Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  InkWell(
+                                    onTap: () {
+                                      // TODO: aksi edit
+                                    },
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(2),
+                                      child: SvgPicture.asset(
+                                        "assets/icons/edit.svg",
+                                        width: 18,
+                                        height: 18,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
-                            ),
-
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                InkWell(
-                                  onTap: () {
-                                    // aksi hapus
-                                  },
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(2),
-                                    child: Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                      size: 18,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                InkWell(
-                                  onTap: () {
-                                    // aksi edit
-                                  },
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(2),
-                                    child: SvgPicture.asset(
-                                      "assets/icons/edit.svg",
-                                      width: 18,
-                                      height: 18,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 }
 
