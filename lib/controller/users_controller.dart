@@ -20,13 +20,21 @@ class UserController extends GetxController {
   var userDetail = Rxn<UserModel>(); // Rxn artinya bisa null
   var isDetailLoading = false.obs;
 
+  var isSubmittingAddress = false.obs;
+
+  var cities = <dynamic>[].obs;
+  var districts = <dynamic>[].obs;
+
+  var isLoadingCities = false.obs;
+  var isLoadingDistricts = false.obs;
+
   @override
   void onInit() {
     super.onInit();
     getUsers();
   }
 
-  // 🔹 Ambil data awal
+  // Ambil data awal
   Future<void> getUsers() async {
     try {
       isLoading.value = true;
@@ -179,6 +187,58 @@ class UserController extends GetxController {
       );
     } finally {
       isSubmitting.value = false;
+    }
+  }
+
+  //tambah alamat
+  Future<void> createAddress({
+    required int userId,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      isSubmittingAddress.value = true;
+      final result = await _repository.createAddress(
+        userId: userId,
+        data: data,
+      );
+
+      // Tambahkan alamat ke userDetail bila sudah ada
+      if (userDetail.value != null) {
+        userDetail.value!.addresses?.add(AddressModel.fromJson(result));
+        userDetail.refresh(); // refresh agar UI update
+      }
+    } catch (e) {
+      print("❌ Gagal menambah alamat: $e");
+      Get.snackbar("Error", "Gagal menambah alamat");
+    } finally {
+      isSubmittingAddress.value = false;
+    }
+  }
+
+  //fetch alamat
+  Future<void> fetchCities() async {
+    try {
+      isLoadingCities.value = true;
+      final result = await _repository.fetchCities();
+      cities.assignAll(result);
+    } catch (e) {
+      print("❌ Gagal fetch cities: $e");
+      Get.snackbar("Error", "Gagal memuat daftar kota");
+    } finally {
+      isLoadingCities.value = false;
+    }
+  }
+
+  Future<void> fetchDistricts(int cityId) async {
+    try {
+      isLoadingDistricts.value = true;
+      final result = await _repository.fetchDistricts(cityId);
+      districts.assignAll(result);
+    } catch (e) {
+      print("❌ Gagal fetch districts: $e");
+      Get.snackbar("Error", "Gagal memuat daftar kecamatan");
+    } finally {
+      isLoadingDistricts.value = false;
     }
   }
 }

@@ -36,4 +36,22 @@ class UserRepository {
     final userData = result['data'];
     return UserModel.fromJson(userData);
   }
+
+  //tambah alamt
+  Future<Map<String, dynamic>> createAddress({
+    required int userId,
+    required Map<String, dynamic> data,
+  }) async {
+    final result = await UserApi.createAddress(userId: userId, body: data);
+    return result['data'];
+  }
+
+  //fetch alamat
+  Future<List<dynamic>> fetchCities() async {
+    return await UserApi.fetchCities();
+  }
+
+  Future<List<dynamic>> fetchDistricts(int cityId) async {
+    return await UserApi.fetchDistricts(cityId);
+  }
 }

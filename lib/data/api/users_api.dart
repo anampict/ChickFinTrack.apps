@@ -90,4 +90,58 @@ class UserApi {
       throw Exception('Gagal memperbarui user: ${response.body}');
     }
   }
+
+  //tambah alamat
+  static Future<Map<String, dynamic>> createAddress({
+    required int userId,
+    required Map<String, dynamic> body,
+  }) async {
+    final box = GetStorage();
+    final token = box.read('token');
+
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/users/$userId/address'),
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Gagal menambah alamat: ${response.body}');
+    }
+  }
+
+  //fetch cities
+  static Future<List<dynamic>> fetchCities() async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/cities'),
+      headers: {...ApiConfig.headers},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['data']; // list of cities
+    } else {
+      throw Exception('Gagal mengambil daftar kota: ${response.body}');
+    }
+  }
+
+  //fetch districts
+  static Future<List<dynamic>> fetchDistricts(int cityId) async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/cities/$cityId/districts'),
+      headers: {...ApiConfig.headers},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['data'];
+    } else {
+      throw Exception('Gagal mengambil daftar kecamatan: ${response.body}');
+    }
+  }
 }

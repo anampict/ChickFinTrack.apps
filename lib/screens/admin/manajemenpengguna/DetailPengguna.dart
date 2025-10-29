@@ -373,50 +373,48 @@ class _AlamatTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final userController = Get.find<UserController>();
 
-    return Obx(() {
-      final user = userController.userDetail.value;
-
-      if (user == null || user.addresses.isEmpty) {
-        return const Center(
-          child: Text(
-            "Belum ada alamat tersimpan",
-            style: TextStyle(
-              fontFamily: "Primary",
-              fontSize: 13,
-              color: Colors.grey,
-            ),
-          ),
-        );
-      }
-
-      return Column(
-        children: [
-          // Header + Tombol Tambah
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Daftar Alamat",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  fontFamily: "Primary",
-                  color: Colors.black,
-                ),
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Daftar Alamat",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                fontFamily: "Primary",
+                color: Colors.black,
               ),
-              ElevatedButton(
-                onPressed: () {
-                  // TODO: Tambah alamat
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xffF26D2B),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+            ),
+            InkWell(
+              onTap: () {
+                final userController = Get.find<UserController>();
+                final user = userController.userDetail.value;
+                if (user != null) {
+                  Get.toNamed(
+                    AppRoutes.TambahAlamat,
+                    arguments: {'userId': user.id},
+                  );
+                }
+              },
+
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xffF26D2B),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.orange.withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: const Text(
                   "Tambah",
@@ -428,13 +426,29 @@ class _AlamatTab extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
 
-          // List alamat
-          Expanded(
-            child: ListView.builder(
+        Expanded(
+          child: Obx(() {
+            final user = userController.userDetail.value;
+
+            if (user == null || user.addresses.isEmpty) {
+              return const Center(
+                child: Text(
+                  "Belum ada alamat tersimpan",
+                  style: TextStyle(
+                    fontFamily: "Primary",
+                    fontSize: 13,
+                    color: Colors.grey,
+                  ),
+                ),
+              );
+            }
+
+            return ListView.builder(
               itemCount: user.addresses.length,
               itemBuilder: (context, index) {
                 final alamat = user.addresses[index];
@@ -472,7 +486,7 @@ class _AlamatTab extends StatelessWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.red[400],
+                                    color: Colors.redAccent,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Text(
@@ -488,7 +502,7 @@ class _AlamatTab extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
 
-                          // Alamat dan tombol edit/hapus
+                          // Alamat + tombol aksi
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -520,14 +534,12 @@ class _AlamatTab extends StatelessWidget {
                                   ],
                                 ),
                               ),
-
-                              // 🔸 Tombol aksi
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   InkWell(
                                     onTap: () {
-                                      // TODO: aksi hapus
+                                      // TODO: hapus
                                     },
                                     borderRadius: BorderRadius.circular(6),
                                     child: const Padding(
@@ -542,7 +554,7 @@ class _AlamatTab extends StatelessWidget {
                                   const SizedBox(width: 4),
                                   InkWell(
                                     onTap: () {
-                                      // TODO: aksi edit
+                                      // TODO: edit
                                     },
                                     borderRadius: BorderRadius.circular(6),
                                     child: Padding(
@@ -564,11 +576,11 @@ class _AlamatTab extends StatelessWidget {
                   ),
                 );
               },
-            ),
-          ),
-        ],
-      );
-    });
+            );
+          }),
+        ),
+      ],
+    );
   }
 }
 
