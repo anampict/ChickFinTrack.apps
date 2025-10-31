@@ -12,68 +12,66 @@ class Daftarkategoriproduk extends StatelessWidget {
   const Daftarkategoriproduk({super.key});
 
   void _hapusKategori(CategoryModel category) {
-    Get.defaultDialog(
-      title: "Hapus Kategori",
-      middleText: "Apakah kamu yakin ingin menghapus '${category.name}'?",
-      confirm: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.redAccent,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    Get.dialog(
+      AlertDialog(
+        title: const Text(
+          "Konfirmasi Hapus",
+          style: TextStyle(fontSize: 16, fontFamily: "Primary"),
         ),
-        onPressed: () async {
-          final controller = Get.find<CategoryController>();
-
-          Get.back();
-          Get.dialog(
-            const Center(child: CircularProgressIndicator()),
-            barrierDismissible: false,
-          );
-
-          try {
-            await controller.deleteCategory(category.id);
-            Get.back();
-            Get.snackbar(
-              "Sukses",
-              "Kategori '${category.name}' berhasil dihapus",
-              snackPosition: SnackPosition.TOP,
-              backgroundColor: Colors.green,
-              colorText: Colors.white,
-              margin: const EdgeInsets.all(12),
-              borderRadius: 10,
-            );
-          } catch (e) {
-            Get.back();
-            Get.snackbar(
-              "Gagal",
-              "Gagal menghapus kategori: $e",
-              snackPosition: SnackPosition.TOP,
-              backgroundColor: Colors.redAccent,
-              colorText: Colors.white,
-              margin: const EdgeInsets.all(12),
-              borderRadius: 10,
-            );
-          }
-        },
-        child: const Text("Hapus"),
-      ),
-      cancel: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
-          side: const BorderSide(color: Colors.black12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        content: Text(
+          "Apakah Anda yakin ingin menghapus kategori '${category.name}'?",
+          style: const TextStyle(fontSize: 14, fontFamily: "Primary"),
         ),
-        onPressed: () => Get.back(),
-        child: const Text("Batal"),
+        actions: [
+          // Tombol Batal
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              "Batal",
+              style: TextStyle(color: Colors.grey, fontFamily: "Primary"),
+            ),
+          ),
+          // Tombol Hapus
+          TextButton(
+            onPressed: () async {
+              final controller = Get.find<CategoryController>();
+              Get.back(); // Tutup dialog konfirmasi
+
+              try {
+                await controller.deleteCategory(category.id);
+                Get.snackbar(
+                  "Sukses",
+                  "Kategori '${category.name}' berhasil dihapus",
+                  snackPosition: SnackPosition.TOP,
+                  backgroundColor: Colors.green,
+                  colorText: Colors.white,
+                  margin: const EdgeInsets.all(12),
+                  borderRadius: 10,
+                );
+              } catch (e) {
+                Get.snackbar(
+                  "Gagal",
+                  "Gagal menghapus kategori: $e",
+                  snackPosition: SnackPosition.TOP,
+                  backgroundColor: Colors.redAccent,
+                  colorText: Colors.white,
+                  margin: const EdgeInsets.all(12),
+                  borderRadius: 10,
+                );
+              }
+            },
+            child: const Text(
+              "Hapus",
+              style: TextStyle(color: Colors.red, fontFamily: "Primary"),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final CategoryController controller = Get.find<CategoryController>();
-
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(

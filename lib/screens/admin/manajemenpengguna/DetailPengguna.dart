@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/helper/utils.dart';
 import 'package:my_app/routes/app_routes.dart';
+import 'package:my_app/screens/admin/manajemenpengguna/TambahAlamat.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/TambahPengguna.dart';
 
 class Detailpengguna extends StatelessWidget {
@@ -452,6 +453,9 @@ class _AlamatTab extends StatelessWidget {
               itemCount: user.addresses.length,
               itemBuilder: (context, index) {
                 final alamat = user.addresses[index];
+                print(
+                  "Alamat ke-$index: ${alamat.addressLine1}, Kota: ${alamat.city}, Kecamatan: ${alamat.districtId}, Kode Pos: ${alamat.postalCode}",
+                );
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -511,7 +515,7 @@ class _AlamatTab extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      "${alamat.addressLine1}, ${alamat.city ?? ''} ${alamat.postalCode ?? ''}",
+                                      "${alamat.addressLine1}, ${alamat.city ?? ''}, ${alamat.cityId ?? ''}, ${alamat.postalCode ?? ''}",
                                       style: const TextStyle(
                                         fontSize: 11.5,
                                         fontFamily: "Primary",
@@ -539,7 +543,56 @@ class _AlamatTab extends StatelessWidget {
                                 children: [
                                   InkWell(
                                     onTap: () {
-                                      // TODO: hapus
+                                      // Tampilkan dialog konfirmasi
+                                      Get.dialog(
+                                        AlertDialog(
+                                          title: const Text(
+                                            "Konfirmasi Hapus",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontFamily: "Primary",
+                                            ),
+                                          ),
+                                          content: const Text(
+                                            "Apakah Anda yakin ingin menghapus alamat ini?",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontFamily: "Primary",
+                                            ),
+                                          ),
+                                          actions: [
+                                            // Tombol Batal
+                                            TextButton(
+                                              onPressed: () => Get.back(),
+                                              child: const Text(
+                                                "Batal",
+                                                style: TextStyle(
+                                                  color: Colors.grey,
+                                                  fontFamily: "Primary",
+                                                ),
+                                              ),
+                                            ),
+                                            // Tombol Hapus
+                                            TextButton(
+                                              onPressed: () async {
+                                                Get.back(); // Tutup dialog
+                                                await userController
+                                                    .deleteAddress(
+                                                      userId: user.id,
+                                                      addressId: alamat.id,
+                                                    );
+                                              },
+                                              child: const Text(
+                                                "Hapus",
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                  fontFamily: "Primary",
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
                                     },
                                     borderRadius: BorderRadius.circular(6),
                                     child: const Padding(
@@ -554,7 +607,30 @@ class _AlamatTab extends StatelessWidget {
                                   const SizedBox(width: 4),
                                   InkWell(
                                     onTap: () {
-                                      // TODO: edit
+                                      Get.to(
+                                        () => Tambahalamat(
+                                          address: {
+                                            'id': alamat.id,
+                                            'shipping_name':
+                                                alamat.shippingName,
+                                            'address_line1':
+                                                alamat.addressLine1,
+                                            'address_line2':
+                                                alamat.addressLine2,
+                                            'district_id': alamat.districtId
+                                                ?.toString(),
+                                            'city_id': alamat.cityId
+                                                ?.toString(),
+                                            'postal_code': alamat.postalCode,
+                                            'phone': user.phone,
+                                            'is_default': alamat.isDefault,
+                                          },
+                                        ),
+                                        arguments: {'userId': user.id},
+                                      )?.then((_) {
+                                        // Refresh data setelah edit
+                                        userController.getUserDetail(user.id);
+                                      });
                                     },
                                     borderRadius: BorderRadius.circular(6),
                                     child: Padding(

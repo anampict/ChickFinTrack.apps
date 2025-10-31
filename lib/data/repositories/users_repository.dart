@@ -46,6 +46,21 @@ class UserRepository {
     return result['data'];
   }
 
+  // update alamat
+  Future<Map<String, dynamic>> updateAddress({
+    required int userId,
+    required int addressId,
+    required Map<String, dynamic> data,
+  }) async {
+    final result = await UserApi.updateAddress(
+      userId: userId,
+      addressId: addressId,
+      body: data,
+    );
+
+    return result['data'];
+  }
+
   //fetch alamat
   Future<List<dynamic>> fetchCities() async {
     return await UserApi.fetchCities();
@@ -53,5 +68,13 @@ class UserRepository {
 
   Future<List<dynamic>> fetchDistricts(int cityId) async {
     return await UserApi.fetchDistricts(cityId);
+  }
+
+  // Hapus alamat
+  Future<void> deleteAddress({
+    required int userId,
+    required int addressId,
+  }) async {
+    await UserApi.deleteAddress(userId: userId, addressId: addressId);
   }
 }

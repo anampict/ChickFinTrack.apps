@@ -49,11 +49,13 @@ class AddressModel {
   final String addressLine1;
   final String? addressLine2;
   final String? districtId;
-  final String? state;
+  final String? district; // nama kecamatan
+  final String? districtName; // nama kecamatan (alternatif)
   final String? cityId;
   final String? city;
   final String? province;
   final String? postalCode;
+  final String? phone;
   final bool isDefault;
   final String createdAt;
   final String updatedAt;
@@ -64,11 +66,13 @@ class AddressModel {
     required this.addressLine1,
     this.addressLine2,
     this.districtId,
-    this.state,
+    this.district,
+    this.districtName,
     this.cityId,
     this.city,
     this.province,
     this.postalCode,
+    this.phone,
     required this.isDefault,
     required this.createdAt,
     required this.updatedAt,
@@ -81,11 +85,13 @@ class AddressModel {
       addressLine1: json['address_line1'] ?? '',
       addressLine2: json['address_line2'],
       districtId: json['district_id']?.toString(),
-      state: json['state'],
+      district: json['district'],
+      districtName: json['district_name'] ?? json['district'],
       cityId: json['city_id']?.toString(),
       city: json['city'],
       province: json['province'],
       postalCode: json['postal_code'],
+      phone: json['phone'],
       isDefault: json['is_default'] ?? false,
       createdAt: json['created_at'] ?? '',
       updatedAt: json['updated_at'] ?? '',

@@ -148,22 +148,50 @@ class Dataproduk extends StatelessWidget {
                         Get.to(() => TambahProduk(product: product));
                       },
                       onDelete: () {
-                        Get.defaultDialog(
-                          title: 'Hapus Produk',
-                          middleText: 'Yakin ingin menghapus produk ini?',
-                          textConfirm: 'Hapus',
-                          textCancel: 'Batal',
-                          confirmTextColor: Colors.white,
-                          buttonColor: Colors.red,
-                          onConfirm: () {
-                            Get.back();
-                            Future.delayed(
-                              const Duration(milliseconds: 300),
-                              () {
-                                controller.deleteProduct(product.id);
-                              },
-                            );
-                          },
+                        Get.dialog(
+                          AlertDialog(
+                            title: const Text(
+                              "Konfirmasi Hapus",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: "Primary",
+                              ),
+                            ),
+                            content: const Text(
+                              "Apakah Anda yakin ingin menghapus produk ini?",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontFamily: "Primary",
+                              ),
+                            ),
+                            actions: [
+                              // Tombol Batal
+                              TextButton(
+                                onPressed: () => Get.back(),
+                                child: const Text(
+                                  "Batal",
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontFamily: "Primary",
+                                  ),
+                                ),
+                              ),
+                              // Tombol Hapus
+                              TextButton(
+                                onPressed: () {
+                                  Get.back(); // Tutup dialog
+                                  controller.deleteProduct(product.id);
+                                },
+                                child: const Text(
+                                  "Hapus",
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontFamily: "Primary",
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       },
                     ),

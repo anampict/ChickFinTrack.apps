@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:my_app/data/models/users_model.dart';
 import 'package:my_app/data/repositories/users_repository.dart';
@@ -48,6 +49,54 @@ class UserController extends GetxController {
       _applyFilter();
     } catch (e) {
       print('Error fetch users: $e');
+
+      // Coba parsing error dari backend (mis. {"message":"..."}) dan tampilkan snackbar
+      final raw = e.toString();
+      String messageToShow = 'Gagal memuat daftar pengguna';
+
+      try {
+        final firstBrace = raw.indexOf('{');
+        if (firstBrace != -1) {
+          final jsonPart = raw.substring(firstBrace);
+          final parsed = jsonDecode(jsonPart);
+          if (parsed is Map && parsed['message'] != null) {
+            final backendMsg = parsed['message'].toString();
+            if (backendMsg.toLowerCase().contains('unauth')) {
+              messageToShow =
+                  'Sesi login Anda telah habis, silakan login ulang.';
+            } else {
+              messageToShow = backendMsg;
+            }
+          } else {
+            if (raw.toLowerCase().contains('unauth')) {
+              messageToShow =
+                  'Sesi login Anda telah habis, silakan login ulang.';
+            } else {
+              messageToShow = raw;
+            }
+          }
+        } else {
+          if (raw.toLowerCase().contains('unauth')) {
+            messageToShow = 'Sesi login Anda telah habis, silakan login ulang.';
+          } else {
+            messageToShow = raw;
+          }
+        }
+      } catch (_) {
+        if (raw.toLowerCase().contains('unauth')) {
+          messageToShow = 'Sesi login Anda telah habis, silakan login ulang.';
+        } else {
+          messageToShow = raw;
+        }
+      }
+
+      Get.snackbar(
+        'Error',
+        messageToShow,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -204,12 +253,70 @@ class UserController extends GetxController {
 
       // Tambahkan alamat ke userDetail bila sudah ada
       if (userDetail.value != null) {
-        userDetail.value!.addresses?.add(AddressModel.fromJson(result));
+        userDetail.value!.addresses.add(AddressModel.fromJson(result));
         userDetail.refresh(); // refresh agar UI update
+        // Tampilkan snackbar sukses
+        Get.snackbar(
+          'Sukses',
+          'Alamat berhasil ditambahkan',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
       print("❌ Gagal menambah alamat: $e");
       Get.snackbar("Error", "Gagal menambah alamat");
+    } finally {
+      isSubmittingAddress.value = false;
+    }
+  }
+
+  // UPDATE alamat
+  Future<void> updateAddress({
+    required int userId,
+    required int addressId,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      isSubmittingAddress.value = true;
+
+      final result = await _repository.updateAddress(
+        userId: userId,
+        addressId: addressId,
+        data: data,
+      );
+
+      // Kalau userDetail ada, update list local
+      if (userDetail.value != null) {
+        final index = userDetail.value!.addresses.indexWhere(
+          (a) => a.id == addressId,
+        );
+
+        if (index != -1) {
+          userDetail.value!.addresses[index] = AddressModel.fromJson(result);
+        }
+
+        userDetail.refresh(); // agar UI update
+      }
+
+      Get.back();
+      Get.snackbar(
+        "Sukses",
+        "Alamat berhasil diperbarui",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      print("Gagal update alamat: $e");
+      Get.snackbar(
+        "Error",
+        "Gagal memperbarui alamat",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       isSubmittingAddress.value = false;
     }
@@ -239,6 +346,38 @@ class UserController extends GetxController {
       Get.snackbar("Error", "Gagal memuat daftar kecamatan");
     } finally {
       isLoadingDistricts.value = false;
+    }
+  }
+
+  // Hapus alamat
+  Future<void> deleteAddress({
+    required int userId,
+    required int addressId,
+  }) async {
+    try {
+      await _repository.deleteAddress(userId: userId, addressId: addressId);
+
+      // Hapus alamat dari list di memori
+      if (userDetail.value != null) {
+        userDetail.value!.addresses.removeWhere((a) => a.id == addressId);
+        userDetail.refresh(); // refresh UI
+      }
+
+      Get.snackbar(
+        "Sukses",
+        "Alamat berhasil dihapus",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      print("❌ Gagal menghapus alamat: $e");
+      Get.snackbar(
+        "Error",
+        "Gagal menghapus alamat",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 }
