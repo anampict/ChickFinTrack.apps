@@ -22,4 +22,15 @@ class OrderRepository {
     final data = await OrderApi.getOrderDetail(id);
     return OrderModel.fromJson(data);
   }
+
+  // tambah order
+  Future<OrderModel> createOrder(Map<String, dynamic> body) async {
+    final result = await OrderApi.createOrder(body);
+
+    if (result['success'] == true && result['data'] != null) {
+      return OrderModel.fromJson(result['data']);
+    } else {
+      throw Exception(result['message'] ?? 'Gagal membuat pesanan');
+    }
+  }
 }

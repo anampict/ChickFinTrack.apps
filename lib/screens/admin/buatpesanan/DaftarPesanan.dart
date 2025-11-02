@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:my_app/controller/order_controller.dart';
 import 'package:my_app/data/models/order_model.dart';
 import 'package:my_app/helper/utils.dart';
+import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
 
 class Daftarpesanan extends StatelessWidget {
   const Daftarpesanan({super.key});
@@ -258,7 +259,7 @@ class Daftarpesanan extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xffF26D2B),
         onPressed: () {
-          // Get.to(() => TambahPesananPage());
+          Get.to(() => Buatpesanan());
         },
         child: const Icon(Icons.add, size: 28, color: Colors.white),
       ),

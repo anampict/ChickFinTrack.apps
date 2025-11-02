@@ -58,4 +58,32 @@ class OrderApi {
       );
     }
   }
+
+  //tambaha pesanan
+  static Future<Map<String, dynamic>> createOrder(
+    Map<String, dynamic> body,
+  ) async {
+    final box = GetStorage();
+    final token = box.read('token');
+
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/order'),
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    final decoded = jsonDecode(response.body);
+    print("Create Order Response: $decoded");
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return decoded;
+    } else {
+      throw Exception(
+        'Gagal membuat order: ${response.statusCode} - ${response.body}',
+      );
+    }
+  }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:my_app/controller/users_controller.dart';
 
 class Buatpesanan extends StatefulWidget {
   const Buatpesanan({super.key});
@@ -101,6 +103,9 @@ class _BuatpesananState extends State<Buatpesanan> {
     super.dispose();
   }
 
+  final userController = Get.put(UserController());
+  String? selectedPelangganId;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -202,43 +207,113 @@ class _BuatpesananState extends State<Buatpesanan> {
               ),
             ),
 
-            // Dropdown biasa
+            //dropdown pelanggan
             Padding(
               padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
-              child: Material(
-                elevation: 2,
-                borderRadius: BorderRadius.circular(8),
-                child: DropdownMenu<String>(
-                  width: MediaQuery.of(context).size.width - 56,
-                  initialSelection: selectedPelanggan,
-                  leadingIcon: const Icon(Icons.person_outline),
-                  inputDecorationTheme: const InputDecorationTheme(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8)),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 12,
+              child: Obx(() {
+                if (userController.isLoading.value &&
+                    userController.users.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final pelangganList = userController.users
+                    .where((u) => u.role == 'customer')
+                    .toList();
+
+                // State lokal untuk loading "load more"
+                bool isLoadMore = false;
+
+                // Generate entries
+                List<DropdownMenuEntry<String>> entries = [
+                  ...pelangganList.map(
+                    (user) => DropdownMenuEntry(
+                      value: user.name ?? '-',
+                      label: user.name ?? '-',
                     ),
                   ),
-                  hintText: "Pilih Pelanggan",
-                  onSelected: (value) {
-                    setState(() {
-                      selectedPelanggan = value;
-                    });
-                  },
-                  dropdownMenuEntries: dummyPelanggan.map((pelanggan) {
-                    return DropdownMenuEntry(
-                      value: pelanggan,
-                      label: pelanggan,
-                    );
-                  }).toList(),
-                ),
-              ),
+                  if (userController.currentPage.value <
+                      userController.lastPage.value)
+                    DropdownMenuEntry(
+                      value: '__load_more__',
+                      label: isLoadMore
+                          ? '🔄 Memuat...'
+                          : '🔄 Muat lebih banyak...',
+                    ),
+                ];
+
+                return Material(
+                  elevation: 2,
+                  borderRadius: BorderRadius.circular(8),
+                  child: StatefulBuilder(
+                    builder: (context, setDropdownState) {
+                      return DropdownMenu<String>(
+                        width: MediaQuery.of(context).size.width - 56,
+                        initialSelection: selectedPelanggan,
+                        leadingIcon: const Icon(Icons.person_outline),
+                        inputDecorationTheme: const InputDecorationTheme(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 12,
+                          ),
+                        ),
+                        hintText: "Pilih Pelanggan",
+                        onSelected: (value) async {
+                          if (value == '__load_more__') {
+                            // Set state loading untuk entry
+                            setDropdownState(() {
+                              isLoadMore = true;
+                              entries[entries.length - 1] = DropdownMenuEntry(
+                                value: '__load_more__',
+                                label: '🔄 Memuat...',
+                              );
+                            });
+
+                            // Load more data
+                            await userController.loadMoreUsers();
+
+                            // Update state dropdown lagi
+                            setDropdownState(() {
+                              isLoadMore = false;
+
+                              final newPelangganList = userController.users
+                                  .where((u) => u.role == 'customer')
+                                  .toList();
+
+                              entries = [
+                                ...newPelangganList.map(
+                                  (user) => DropdownMenuEntry(
+                                    value: user.name ?? '-',
+                                    label: user.name ?? '-',
+                                  ),
+                                ),
+                                if (userController.currentPage.value <
+                                    userController.lastPage.value)
+                                  DropdownMenuEntry(
+                                    value: '__load_more__',
+                                    label: 'Muat lebih banyak...',
+                                  ),
+                              ];
+                            });
+                          } else {
+                            setState(() {
+                              selectedPelanggan = value;
+                            });
+                          }
+                        },
+                        dropdownMenuEntries: entries,
+                      );
+                    },
+                  ),
+                );
+              }),
             ),
+
             //alamat pengiriman
             Padding(
               padding: const EdgeInsets.only(top: 9, left: 28, right: 28),

@@ -10,6 +10,8 @@ class OrderController extends GetxController {
   var selectedOrder = Rxn<OrderModel>();
   var pagination = Rxn<Map<String, dynamic>>();
 
+  var isCreating = false.obs;
+
   var currentPage = 1.obs;
 
   @override
@@ -81,6 +83,47 @@ class OrderController extends GetxController {
       print('Error fetch order detail: $e');
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<OrderModel?> createOrder({
+    required int userId,
+    required int userAddressId,
+    required int courierId,
+    required String orderDate,
+    required int totalAmount,
+    required int deposit,
+    required List<Map<String, dynamic>> orderItems,
+  }) async {
+    try {
+      isCreating.value = true;
+
+      final body = {
+        "user_id": userId,
+        "user_address_id": userAddressId,
+        "courier_id": courierId,
+        "order_date": orderDate,
+        "total_amount": totalAmount,
+        "deposit": deposit,
+        "order_items": orderItems,
+      };
+
+      print("Sending Order: $body");
+
+      final result = await _repository.createOrder(body);
+
+      // setelah berhasil: refresh list
+      await fetchOrders();
+
+      Get.snackbar("Sukses", "Order berhasil dibuat");
+
+      return result;
+    } catch (e) {
+      print("Error create order: $e");
+      Get.snackbar("Gagal", e.toString());
+      return null;
+    } finally {
+      isCreating.value = false;
     }
   }
 }
