@@ -5,7 +5,6 @@ import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/helper/utils.dart';
 import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/TambahAlamat.dart';
-import 'package:my_app/screens/admin/manajemenpengguna/TambahPengguna.dart';
 
 class Detailpengguna extends StatelessWidget {
   final int userId;

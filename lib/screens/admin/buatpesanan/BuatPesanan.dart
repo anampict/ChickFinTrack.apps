@@ -19,7 +19,7 @@ class _BuatpesananState extends State<Buatpesanan> {
     'Pelanggan C',
   ];
   //alamat
-  String? selectedAlamat;
+  // String? selectedAlamat;
 
   final List<String> dummyAlamat = ['Kluwut', 'Lebaksari', 'Kedawung'];
 
@@ -108,8 +108,9 @@ class _BuatpesananState extends State<Buatpesanan> {
   final userController = Get.put(UserController());
   String? selectedPelangganId;
   String? selectedKurirName;
+  String? selectedAlamat; // akan simpan nama / label
+  int? selectedAlamatId;
   int? selectedKurirId;
-
   @override
   void initState() {
     super.initState();
@@ -281,10 +282,49 @@ class _BuatpesananState extends State<Buatpesanan> {
                         );
                       },
                     ),
-                    onChanged: (value) {
+                    // onChanged: (value) async {
+                    //   if (value == null) return;
+
+                    //   setState(() {
+                    //     selectedPelanggan = value;
+                    //     selectedAlamat = null; // reset alamat
+                    //     selectedAlamatId = null;
+                    //   });
+
+                    //   final picked = userController.users.firstWhere(
+                    //     (u) => u.name == value,
+                    //   );
+
+                    //   selectedPelangganId = picked.id.toString();
+
+                    //   print(
+                    //     "Pelanggan dipilih -> name=${picked.name}, id=${picked.id}",
+                    //   );
+
+                    //   await userController.getUserDetail(picked.id);
+
+                    //   setState(() {});
+                    // },
+                    onChanged: (value) async {
+                      if (value == null) return;
+
                       setState(() {
                         selectedPelanggan = value;
+                        selectedAlamat = null;
+                        selectedAlamatId = null;
                       });
+
+                      final picked = userController.users.firstWhere(
+                        (u) => u.name == value,
+                      );
+
+                      selectedPelangganId = picked.id.toString();
+
+                      print(
+                        "Pelanggan dipilih -> name=${picked.name}, id=${picked.id}",
+                      );
+
+                      await userController.getUserDetail(picked.id);
                     },
                   ),
                 );
@@ -307,37 +347,71 @@ class _BuatpesananState extends State<Buatpesanan> {
             // Dropdown biasa
             Padding(
               padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
-              child: Material(
-                elevation: 2,
-                borderRadius: BorderRadius.circular(8),
-                child: DropdownMenu<String>(
-                  width: MediaQuery.of(context).size.width - 56,
-                  initialSelection: selectedAlamat,
-                  leadingIcon: const Icon(Icons.person_outline),
-                  inputDecorationTheme: const InputDecorationTheme(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8)),
-                      borderSide: BorderSide.none,
+              child: Obx(() {
+                final user = userController.userDetail.value;
+
+                if (user == null || user.addresses.isEmpty) {
+                  return Material(
+                    elevation: 2,
+                    borderRadius: BorderRadius.circular(8),
+                    shadowColor: Colors.transparent,
+                    surfaceTintColor:
+                        Colors.transparent, // hilangkan border hitam
+                    child: DropdownMenu<String>(
+                      width: MediaQuery.of(context).size.width - 56,
+                      leadingIcon: const Icon(Icons.location_on_outlined),
+                      hintText: "Belum ada alamat",
+                      dropdownMenuEntries: const [],
                     ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 12,
-                    ),
-                  ),
-                  hintText: "Pilih Alamat Pengiriman",
-                  onSelected: (value) {
+                  );
+                }
+
+                final defaultAddress = user.addresses.firstWhere(
+                  (a) => a.isDefault == true,
+                  orElse: () => user.addresses.first,
+                );
+
+                /// selalu sync alamat ketika userDetail berubah
+                Future.microtask(() {
+                  if (selectedAlamatId != defaultAddress.id) {
                     setState(() {
-                      selectedAlamat = value;
+                      selectedAlamat = defaultAddress.addressLine1;
+                      selectedAlamatId = defaultAddress.id;
                     });
-                  },
-                  dropdownMenuEntries: dummyAlamat.map((alamat) {
-                    return DropdownMenuEntry(value: alamat, label: alamat);
-                  }).toList(),
-                ),
-              ),
+                  }
+                });
+
+                return Material(
+                  elevation: 2,
+                  borderRadius: BorderRadius.circular(8),
+                  child: DropdownMenu<String>(
+                    width: MediaQuery.of(context).size.width - 56,
+                    initialSelection: selectedAlamat,
+                    leadingIcon: const Icon(Icons.location_on_outlined),
+                    hintText: "Pilih Alamat Pengiriman",
+                    onSelected: (value) {
+                      if (value == null) return;
+
+                      final picked = user.addresses.firstWhere(
+                        (a) => a.addressLine1 == value,
+                      );
+
+                      setState(() {
+                        selectedAlamat = picked.addressLine1;
+                        selectedAlamatId = picked.id;
+                      });
+                    },
+                    dropdownMenuEntries: user.addresses.map((alamat) {
+                      return DropdownMenuEntry(
+                        value: alamat.addressLine1,
+                        label: alamat.addressLine1,
+                      );
+                    }).toList(),
+                  ),
+                );
+              }),
             ),
+
             //kurir dan tanggal
             Padding(
               padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
