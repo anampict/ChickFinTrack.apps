@@ -104,8 +104,11 @@ class _BuatpesananState extends State<Buatpesanan> {
     super.dispose();
   }
 
+  //variabel user controller
   final userController = Get.put(UserController());
   String? selectedPelangganId;
+  String? selectedKurirName;
+  int? selectedKurirId;
 
   @override
   void initState() {
@@ -355,47 +358,64 @@ class _BuatpesananState extends State<Buatpesanan> {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Material(
-                          elevation: 2,
-                          borderRadius: BorderRadius.circular(8),
-                          child: DropdownMenu<String>(
-                            width: double.infinity,
-                            initialSelection: selectedKurir,
-                            leadingIcon: const Icon(
-                              Icons.local_shipping_outlined,
-                            ),
-                            inputDecorationTheme: const InputDecorationTheme(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(8),
+                        Obx(() {
+                          final kurirList = userController.users
+                              .where((u) => u.role == 'courier')
+                              .toList();
+
+                          return Material(
+                            elevation: 2,
+                            borderRadius: BorderRadius.circular(8),
+                            child: DropdownMenu<String>(
+                              width: double.infinity,
+                              initialSelection: selectedKurir,
+                              leadingIcon: const Icon(
+                                Icons.local_shipping_outlined,
+                              ),
+                              inputDecorationTheme: const InputDecorationTheme(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(8),
+                                  ),
+                                  borderSide: BorderSide.none,
                                 ),
-                                borderSide: BorderSide.none,
+                                filled: true,
+                                fillColor: Colors.white,
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 14,
+                                  horizontal: 12,
+                                ),
+                                hintStyle: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
                               ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: EdgeInsets.symmetric(
-                                vertical: 14,
-                                horizontal: 12,
-                              ),
-                              hintStyle: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 14,
-                              ),
+                              hintText: 'Pilih Kurir',
+                              onSelected: (value) {
+                                if (value == null) return;
+
+                                final picked = kurirList.firstWhere(
+                                  (u) => u.name == value,
+                                );
+
+                                setState(() {
+                                  selectedKurir = picked.name;
+                                  selectedKurirId = picked.id; // ID tersimpan
+                                });
+
+                                print(
+                                  "Dipilih kurir -> name=${picked.name}, id=${picked.id}",
+                                );
+                              },
+                              dropdownMenuEntries: kurirList.map((kurir) {
+                                return DropdownMenuEntry(
+                                  value: kurir.name ?? '-',
+                                  label: kurir.name ?? '-',
+                                );
+                              }).toList(),
                             ),
-                            hintText: 'Pilih Kurir',
-                            onSelected: (value) {
-                              setState(() {
-                                selectedKurir = value;
-                              });
-                            },
-                            dropdownMenuEntries: dummyKurir.map((kurir) {
-                              return DropdownMenuEntry(
-                                value: kurir,
-                                label: kurir,
-                              );
-                            }).toList(),
-                          ),
-                        ),
+                          );
+                        }),
                       ],
                     ),
                   ),
