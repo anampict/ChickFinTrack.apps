@@ -1,7 +1,9 @@
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:my_app/controller/product_controller.dart';
 import 'package:my_app/controller/users_controller.dart';
+import 'package:my_app/data/models/product_model.dart';
 
 class Buatpesanan extends StatefulWidget {
   const Buatpesanan({super.key});
@@ -18,6 +20,9 @@ class _BuatpesananState extends State<Buatpesanan> {
     'Pelanggan B',
     'Pelanggan C',
   ];
+
+  //produk
+
   //alamat
   // String? selectedAlamat;
 
@@ -111,6 +116,11 @@ class _BuatpesananState extends State<Buatpesanan> {
   String? selectedAlamat; // akan simpan nama / label
   int? selectedAlamatId;
   int? selectedKurirId;
+  bool alamatUserPicked = false;
+
+  //produk controller
+  final productController = Get.find<ProductController>();
+
   @override
   void initState() {
     super.initState();
@@ -305,6 +315,27 @@ class _BuatpesananState extends State<Buatpesanan> {
 
                     //   setState(() {});
                     // },
+                    // onChanged: (value) async {
+                    //   if (value == null) return;
+
+                    //   setState(() {
+                    //     selectedPelanggan = value;
+                    //     selectedAlamat = null;
+                    //     selectedAlamatId = null;
+                    //   });
+
+                    //   final picked = userController.users.firstWhere(
+                    //     (u) => u.name == value,
+                    //   );
+
+                    //   selectedPelangganId = picked.id.toString();
+
+                    //   print(
+                    //     "Pelanggan dipilih -> name=${picked.name}, id=${picked.id}",
+                    //   );
+
+                    //   await userController.getUserDetail(picked.id);
+                    // },
                     onChanged: (value) async {
                       if (value == null) return;
 
@@ -312,6 +343,7 @@ class _BuatpesananState extends State<Buatpesanan> {
                         selectedPelanggan = value;
                         selectedAlamat = null;
                         selectedAlamatId = null;
+                        alamatUserPicked = false; // <-- reset
                       });
 
                       final picked = userController.users.firstWhere(
@@ -319,10 +351,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                       );
 
                       selectedPelangganId = picked.id.toString();
-
-                      print(
-                        "Pelanggan dipilih -> name=${picked.name}, id=${picked.id}",
-                      );
 
                       await userController.getUserDetail(picked.id);
                     },
@@ -372,8 +400,18 @@ class _BuatpesananState extends State<Buatpesanan> {
                 );
 
                 /// selalu sync alamat ketika userDetail berubah
+                // Future.microtask(() {
+                //   if (selectedAlamatId != defaultAddress.id) {
+                //     setState(() {
+                //       selectedAlamat = defaultAddress.addressLine1;
+                //       selectedAlamatId = defaultAddress.id;
+                //     });
+                //   }
+                // });
+
                 Future.microtask(() {
-                  if (selectedAlamatId != defaultAddress.id) {
+                  if (!alamatUserPicked &&
+                      (selectedAlamatId != defaultAddress.id)) {
                     setState(() {
                       selectedAlamat = defaultAddress.addressLine1;
                       selectedAlamatId = defaultAddress.id;
@@ -389,6 +427,19 @@ class _BuatpesananState extends State<Buatpesanan> {
                     initialSelection: selectedAlamat,
                     leadingIcon: const Icon(Icons.location_on_outlined),
                     hintText: "Pilih Alamat Pengiriman",
+
+                    // onSelected: (value) {
+                    //   if (value == null) return;
+
+                    //   final picked = user.addresses.firstWhere(
+                    //     (a) => a.addressLine1 == value,
+                    //   );
+
+                    //   setState(() {
+                    //     selectedAlamat = picked.addressLine1;
+                    //     selectedAlamatId = picked.id;
+                    //   });
+                    // },
                     onSelected: (value) {
                       if (value == null) return;
 
@@ -399,6 +450,9 @@ class _BuatpesananState extends State<Buatpesanan> {
                       setState(() {
                         selectedAlamat = picked.addressLine1;
                         selectedAlamatId = picked.id;
+
+                        // tandai bahwa user sudah memilih alamat sendiri
+                        alamatUserPicked = true;
                       });
                     },
                     dropdownMenuEntries: user.addresses.map((alamat) {
@@ -618,44 +672,44 @@ class _BuatpesananState extends State<Buatpesanan> {
                                   Material(
                                     elevation: 2,
                                     borderRadius: BorderRadius.circular(8),
-                                    child: DropdownMenu<String>(
-                                      width: double.infinity,
-                                      initialSelection: item.selectedProduk,
-                                      inputDecorationTheme:
-                                          const InputDecorationTheme(
-                                            border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.all(
-                                                Radius.circular(8),
+                                    child: Obx(() {
+                                      final listProduk =
+                                          productController.products;
+
+                                      return DropdownMenu<String>(
+                                        width: double.infinity,
+                                        initialSelection: item.selectedProduk,
+                                        hintText: 'Pilih Produk',
+                                        onSelected: (value) {
+                                          if (value == null) return;
+
+                                          setState(() {
+                                            item.selectedProduk = value;
+
+                                            final picked = listProduk
+                                                .firstWhere(
+                                                  (p) => p.name == value,
+                                                );
+
+                                            item.productId = picked.id;
+                                            item.hargaController.text = picked
+                                                .price
+                                                .toString();
+
+                                            item.hitungSubtotal();
+                                            _hitungTotalHarga();
+                                          });
+                                        },
+                                        dropdownMenuEntries: listProduk
+                                            .map(
+                                              (produk) => DropdownMenuEntry(
+                                                value: produk.name,
+                                                label: produk.name,
                                               ),
-                                              borderSide: BorderSide.none,
-                                            ),
-                                            filled: true,
-                                            fillColor: Colors.white,
-                                            contentPadding:
-                                                EdgeInsets.symmetric(
-                                                  vertical: 14,
-                                                  horizontal: 12,
-                                                ),
-                                            hintStyle: TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                      hintText: 'Pilih Produk',
-                                      onSelected: (value) {
-                                        setState(() {
-                                          item.selectedProduk = value;
-                                        });
-                                      },
-                                      dropdownMenuEntries: produkList.map((
-                                        produk,
-                                      ) {
-                                        return DropdownMenuEntry(
-                                          value: produk,
-                                          label: produk,
-                                        );
-                                      }).toList(),
-                                    ),
+                                            )
+                                            .toList(),
+                                      );
+                                    }),
                                   ),
                                 ],
                               ),
@@ -937,24 +991,39 @@ class _BuatpesananState extends State<Buatpesanan> {
 }
 
 class ItemPesanan {
+  ProductModel? product;
   String? selectedProduk;
-  final TextEditingController jumlahController;
-  final TextEditingController hargaController;
-  final TextEditingController subtotalController;
+  int? productId;
 
-  ItemPesanan({
-    this.selectedProduk,
-    String jumlah = '0',
-    String harga = '0',
-    String subtotal = '0',
-  }) : jumlahController = TextEditingController(text: jumlah),
-       hargaController = TextEditingController(text: harga),
-       subtotalController = TextEditingController(text: subtotal);
+  TextEditingController jumlahController = TextEditingController(text: "0");
+  TextEditingController hargaController = TextEditingController(text: "0");
+  TextEditingController subtotalController = TextEditingController(text: "0");
+
+  int subtotal = 0;
+
+  ItemPesanan({this.product}) {
+    if (product != null) {
+      productId = product!.id;
+      selectedProduk = product!.name;
+
+      hargaController.text = product!.price.toString();
+    }
+  }
+
+  void setProduct(ProductModel model) {
+    product = model;
+    productId = model.id;
+    selectedProduk = model.name;
+    hargaController.text = model.price.toString();
+    hitungSubtotal();
+  }
 
   void hitungSubtotal() {
-    final jml = int.tryParse(jumlahController.text) ?? 0;
-    final hrg = int.tryParse(hargaController.text) ?? 0;
-    subtotalController.text = (jml * hrg).toString();
+    final jumlah = int.tryParse(jumlahController.text) ?? 0;
+    final harga = double.tryParse(hargaController.text) ?? 0;
+
+    subtotal = (jumlah * harga).toInt();
+    subtotalController.text = subtotal.toString();
   }
 
   void dispose() {
