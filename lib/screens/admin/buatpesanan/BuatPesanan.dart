@@ -6,6 +6,7 @@ import 'package:my_app/controller/product_controller.dart';
 import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/data/models/product_model.dart';
 import 'package:my_app/helper/utils.dart';
+import 'package:my_app/routes/app_routes.dart';
 
 class Buatpesanan extends StatefulWidget {
   const Buatpesanan({super.key});
@@ -119,6 +120,9 @@ class _BuatpesananState extends State<Buatpesanan> {
 
   //buatpesanan
   final orderController = Get.put(OrderController());
+
+  bool isLoading = false;
+
   Future<void> submitPesanan() async {
     print("=== MULAI BUAT PESANAN ===");
 
@@ -131,33 +135,16 @@ class _BuatpesananState extends State<Buatpesanan> {
       return;
     }
 
-    // final orderItems = items.map((item) {
-    //   final jumlah = int.tryParse(item.jumlahController.text) ?? 0;
-    //   final harga =
-    //       int.tryParse(
-    //         item.hargaController.text.replaceAll(RegExp(r'[^0-9]'), ''),
-    //       ) ??
-    //       0;
-
-    //   final data = {
-    //     "product_id": item.productId,
-    //     "quantity": jumlah,
-    //     "price": harga,
-    //     "subtotal": jumlah * harga,
-    //   };
-    //   print("🧾 Item: $data");
-    //   return data;
-    // }).toList();
+    setState(() {
+      isLoading = true;
+    });
 
     final orderItems = items.map((item) {
       final jumlah = int.tryParse(item.jumlahController.text) ?? 0;
-
-      // Ambil harga dari item.product.price atau dari item.hargaController.text yang sudah benar
       final harga =
           item.product?.price ??
           double.tryParse(item.hargaController.text) ??
           0;
-
       final subtotal = (jumlah * harga).toInt();
 
       return {
@@ -167,11 +154,6 @@ class _BuatpesananState extends State<Buatpesanan> {
         "subtotal": subtotal,
       };
     }).toList();
-
-    // final total = orderItems.fold<int>(
-    //   0,
-    //   (sum, i) => sum + (i["subtotal"] as int),
-    // );
 
     final totalAmount = orderItems.fold<int>(
       0,
@@ -207,8 +189,25 @@ class _BuatpesananState extends State<Buatpesanan> {
         selectedKurir = null;
         selectedPelanggan = null;
       });
+
+      Get.snackbar(
+        "Sukses",
+        "Pesanan berhasil dibuat!",
+        backgroundColor: Colors.green.shade600,
+        colorText: Colors.white,
+      );
     } catch (e) {
       print("Gagal kirim pesanan: $e");
+      Get.snackbar(
+        "Error",
+        "Gagal membuat pesanan",
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -988,21 +987,28 @@ class _BuatpesananState extends State<Buatpesanan> {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          onPressed: () {
-                            // Aksi buat pesanan
-                            submitPesanan();
-                          },
-                          child: const Text(
-                            "Buat Pesanan",
-                            style: TextStyle(
-                              fontFamily: "Primary",
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
+                          onPressed: isLoading ? null : submitPesanan,
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  "Buat Pesanan",
+                                  style: TextStyle(
+                                    fontFamily: "Primary",
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       ),
+
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton(
@@ -1059,9 +1065,6 @@ class ItemPesanan {
       productId = product!.id;
       selectedProduk = product!.name;
 
-      // hargaController.text = formatRupiah(product!.price);
-      // hargaController.text = formatRupiah(product!.price.toInt());
-      // hargaController.text = product!.price.toInt().toString();
       hargaController.text = product!.price.toStringAsFixed(0);
     }
   }
@@ -1070,25 +1073,9 @@ class ItemPesanan {
     product = model;
     productId = model.id;
     selectedProduk = model.name;
-    // hargaController.text = formatRupiah(model.price);
-    // hargaController.text = formatRupiah(model.price.toInt());
-    // hargaController.text = model.price.toInt().toString();
     hargaController.text = model.price.toStringAsFixed(0);
     hitungSubtotal();
   }
-
-  // void hitungSubtotal() {
-  //   final jumlah =
-  //       int.tryParse(jumlahController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
-  //       0;
-  //   final harga =
-  //       int.tryParse(hargaController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
-  //       0;
-  //   print('DEBUG jumlah: $jumlah, harga: $harga');
-
-  //   subtotal = jumlah * harga;
-  //   subtotalController.text = subtotal.toString();
-  // }
 
   void hitungSubtotal() {
     final jumlah = int.tryParse(jumlahController.text) ?? 0;

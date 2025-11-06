@@ -115,12 +115,9 @@ class OrderController extends GetxController {
       // setelah berhasil: refresh list
       await fetchOrders();
 
-      Get.snackbar("Sukses", "Order berhasil dibuat");
-
       return result;
     } catch (e) {
       print("Error create order: $e");
-      Get.snackbar("Gagal", e.toString());
       return null;
     } finally {
       isCreating.value = false;

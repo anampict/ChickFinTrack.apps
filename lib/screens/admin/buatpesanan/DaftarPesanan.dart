@@ -166,7 +166,7 @@ class Daftarpesanan extends StatelessWidget {
                                     order.user?.name ?? 'Tanpa Nama',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 15,
+                                      fontSize: 12,
                                       fontFamily: "Primary",
                                     ),
                                   ),
