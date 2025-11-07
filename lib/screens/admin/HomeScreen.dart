@@ -4,6 +4,9 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:intl/intl.dart';
 import 'package:my_app/controller/order_controller.dart';
+import 'package:my_app/controller/product_controller.dart';
+import 'package:my_app/controller/users_controller.dart';
+import 'package:my_app/data/repositories/product_repository.dart';
 import 'package:my_app/routes/app_routes.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -19,6 +22,10 @@ class _HomescreenState extends State<Homescreen> {
   int _currentPage = 0;
 
   final orderController = Get.put(OrderController());
+  final productController = Get.put(
+    ProductController(repository: ProductRepository()),
+  );
+  final userController = Get.put(UserController());
 
   @override
   void initState() {
@@ -293,7 +300,7 @@ class _HomescreenState extends State<Homescreen> {
                       ],
                     ),
                   ),
-                  _buildMenu2("assets/icons/box.svg", "Produk"),
+                  _buildMenu2(),
                 ],
               ),
             ),
@@ -466,50 +473,74 @@ Widget _buildMenu(String iconPath, String label, {VoidCallback? onTap}) {
   );
 }
 
-Widget _buildMenu2(String iconPath, String label) {
-  return GridView.count(
-    physics: const NeverScrollableScrollPhysics(),
-    shrinkWrap: true,
-    crossAxisCount: 2,
-    childAspectRatio: 1.8,
-    mainAxisSpacing: 12,
-    crossAxisSpacing: 12,
-    padding: const EdgeInsets.all(16),
-    children: [
-      _buildCard(
-        title: "Produk",
-        value: "10",
-        subtitle: "Tersedia",
-        subtitleColor: Colors.orange,
-        icon: "assets/icons/produk.svg",
-        color: Colors.orange,
-      ),
-      _buildCard(
-        title: "Pelanggan",
-        value: "26",
-        subtitle: "Terdaftar",
-        subtitleColor: Colors.green,
-        icon: "assets/icons/pelanggan.svg",
-        color: Colors.green,
-      ),
-      _buildCard(
-        title: "Pesanan",
-        value: "37",
-        subtitle: "+0.0%",
-        subtitleColor: Colors.green,
-        icon: "assets/icons/kurvapesanan.svg",
-        color: Colors.green,
-      ),
-      _buildCard(
-        title: "Revenue",
-        value: "Rp. 82,8 Jt",
-        subtitle: "+0.0%",
-        subtitleColor: Colors.green,
-        icon: "assets/icons/kurvapesanan.svg",
-        color: Colors.green,
-      ),
-    ],
-  );
+Widget _buildMenu2() {
+  final productController = Get.find<ProductController>();
+  final userController = Get.find<UserController>();
+  final orderController = Get.find<OrderController>();
+
+  return Obx(() {
+    final produkCount = productController.products.length;
+    final pelangganCount = userController.users.length;
+    final pesananCount = orderController.orders.length;
+
+    final revenue = orderController.orders.fold<int>(
+      0,
+      (sum, o) => sum + (o.totalAmount ?? 0),
+    );
+
+    String formatRupiah(int amount) {
+      final f = NumberFormat.currency(
+        locale: 'id_ID',
+        symbol: 'Rp ',
+        decimalDigits: 0,
+      );
+      return f.format(amount);
+    }
+
+    return GridView.count(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      crossAxisCount: 2,
+      childAspectRatio: 1.8,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildCard(
+          title: "Produk",
+          value: "$produkCount",
+          subtitle: "Tersedia",
+          subtitleColor: Colors.orange,
+          icon: "assets/icons/produk.svg",
+          color: Colors.orange,
+        ),
+        _buildCard(
+          title: "Pelanggan",
+          value: "$pelangganCount",
+          subtitle: "Terdaftar",
+          subtitleColor: Colors.green,
+          icon: "assets/icons/pelanggan.svg",
+          color: Colors.green,
+        ),
+        _buildCard(
+          title: "Pesanan",
+          value: "$pesananCount",
+          subtitle: "+0.0%",
+          subtitleColor: Colors.green,
+          icon: "assets/icons/kurvapesanan.svg",
+          color: Colors.green,
+        ),
+        _buildCard(
+          title: "Revenue",
+          value: formatRupiah(revenue),
+          subtitle: "+0.0%",
+          subtitleColor: Colors.green,
+          icon: "assets/icons/kurvapesanan.svg",
+          color: Colors.green,
+        ),
+      ],
+    );
+  });
 }
 
 Widget _buildCard({
