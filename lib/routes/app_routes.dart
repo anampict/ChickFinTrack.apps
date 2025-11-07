@@ -6,6 +6,7 @@ class AppRoutes {
   static const DataProduk = '/data-produk';
   static const Pesanan = '/buatpesanan';
   static const DaftarPesanan = '/daftarpesanan';
+  static const DetailPesanan = '/detailpesanan';
   static const TambahKategori = '/tambahkategori';
   static const TambahProduk = '/tambahproduk';
   static const DetailProduk = '/detailproduk';

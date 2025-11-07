@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import 'package:my_app/controller/order_controller.dart';
 import 'package:my_app/data/models/order_model.dart';
 import 'package:my_app/helper/utils.dart';
+import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
+import 'package:my_app/screens/admin/buatpesanan/DetailPesanan.dart';
 
 class Daftarpesanan extends StatelessWidget {
   const Daftarpesanan({super.key});
@@ -139,114 +141,124 @@ class Daftarpesanan extends StatelessWidget {
                     left: 15,
                     top: 10,
                   ),
-                  child: Material(
-                    elevation: 4,
-                    shadowColor: Colors.black26,
+                  child: InkWell(
+                    onTap: () {
+                      Get.toNamed(AppRoutes.DetailPesanan, arguments: order);
+                    },
                     borderRadius: BorderRadius.circular(10),
-                    color: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // === HEADER ===
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const CircleAvatar(
-                                    radius: 20,
-                                    backgroundImage: AssetImage(
-                                      "assets/images/image.png",
+                    child: Material(
+                      elevation: 4,
+                      shadowColor: Colors.black26,
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // === HEADER ===
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const CircleAvatar(
+                                      radius: 20,
+                                      backgroundImage: AssetImage(
+                                        "assets/images/image.png",
+                                      ),
                                     ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      order.user?.name ?? 'Tanpa Nama',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                        fontFamily: "Primary",
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  formatTanggal(
+                                    DateTime.tryParse(order.orderDate),
                                   ),
-                                  const SizedBox(width: 8),
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    color: Colors.black87,
+                                    fontFamily: "Primary",
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 50,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                                   Text(
-                                    order.user?.name ?? 'Tanpa Nama',
+                                    "Kode Pesanan: ${order.orderNumber}",
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
+                                      fontSize: 11,
+                                      color: Colors.black87,
                                       fontFamily: "Primary",
                                     ),
                                   ),
+                                  Text(
+                                    "Kurir: ${order.courier?.name ?? '-'}",
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.black87,
+                                      fontFamily: "Primary",
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    "Total Harga : ${formatRupiah(order.totalAmount)}",
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black,
+                                      fontFamily: "Primary",
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
                                 ],
                               ),
-                              Text(
-                                formatTanggal(
-                                  DateTime.tryParse(order.orderDate),
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  color: Colors.black87,
-                                  fontFamily: "Primary",
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 50),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Kode Pesanan: ${order.orderNumber}",
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.black87,
-                                    fontFamily: "Primary",
-                                  ),
-                                ),
-                                Text(
-                                  "Kurir: ${order.courier?.name ?? '-'}",
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.black87,
-                                    fontFamily: "Primary",
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  "Total Harga : ${formatRupiah(order.totalAmount)}",
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black,
-                                    fontFamily: "Primary",
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                              ],
                             ),
-                          ),
 
-                          // === STATUS ===
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Material(
-                                color: const Color(0xffA42727).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  child: Text(
-                                    order.activeHistory?.statusName ??
-                                        'Tidak Diketahui',
-                                    style: const TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xffF26D2B),
+                            // === STATUS ===
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Material(
+                                  color: const Color(
+                                    0xffA42727,
+                                  ).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    child: Text(
+                                      order.activeHistory?.statusName ??
+                                          'Tidak Diketahui',
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xffF26D2B),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

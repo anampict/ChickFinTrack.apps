@@ -1,7 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:my_app/controller/users_controller.dart';
+import 'package:my_app/data/models/order_model.dart';
+import 'package:my_app/data/models/users_model.dart' show AddressModel;
 
 class Detailpesanan extends StatelessWidget {
-  const Detailpesanan({super.key});
+  final OrderModel order;
+  Detailpesanan({super.key, required this.order}) {
+    Get.lazyPut(() => UserController());
+
+    final user = order.user;
+    AddressModel? alamat;
+
+    // Cari alamat dari user.addresses yang id-nya sama dengan userAddressId
+    if (user != null && user.addresses.isNotEmpty) {
+      try {
+        alamat = user.addresses.firstWhere((a) => a.id == order.userAddressId);
+      } catch (e) {
+        alamat = null;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +179,7 @@ class Detailpesanan extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Section: Detail Pesanan
-            const DetailSection(),
+            DetailSection(order: order),
 
             // Section: Item Pesanan
             const ItemSection(),
@@ -174,7 +194,9 @@ class Detailpesanan extends StatelessWidget {
 }
 
 class DetailSection extends StatelessWidget {
-  const DetailSection({super.key});
+  final OrderModel order;
+
+  const DetailSection({super.key, required this.order});
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +213,31 @@ class DetailSection extends StatelessWidget {
       fontSize: 12,
       color: Colors.black,
     );
+
+    // Fungsi format Rupiah
+    String formatRupiah(int amount) {
+      final formatter = NumberFormat.currency(
+        locale: 'id_ID',
+        symbol: 'Rp ',
+        decimalDigits: 0,
+      );
+      return formatter.format(amount);
+    }
+
+    final user = order.user;
+    final addresses = user?.addresses ?? [];
+    print("User address id: ${order.userAddressId}");
+    print("User addresses: ${addresses.map((a) => a.id).toList()}");
+
+    AddressModel? alamat;
+    if (addresses.isNotEmpty) {
+      final matched = addresses.where(
+        (a) => a.id.toString() == order.userAddressId.toString(),
+      );
+      if (matched.isNotEmpty) {
+        alamat = matched.first;
+      }
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
@@ -214,14 +261,14 @@ class DetailSection extends StatelessWidget {
               const SizedBox(height: 12),
               const Divider(),
               const SizedBox(height: 12),
-
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final halfWidth = (constraints.maxWidth - 16) / 2;
+                  final halfWidth =
+                      (constraints.maxWidth - 16) / 2.0; // pastikan double
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 👉 Kolom kiri
+                      // Kolom kiri
                       SizedBox(
                         width: halfWidth,
                         child: Column(
@@ -229,46 +276,62 @@ class DetailSection extends StatelessWidget {
                           children: [
                             _infoItem(
                               "Nomor Pesanan",
-                              "AB/28092025/0051",
+                              order.orderNumber,
                               labelStyle,
                               valueStyle,
                             ),
                             _infoItem(
                               "Kurir",
-                              "Syaroni",
+                              order.courier?.name ?? '-',
                               labelStyle,
                               valueStyle,
                             ),
                             _infoItem(
                               "Alamat",
-                              "Pandan",
+                              order.userAddressId,
                               labelStyle,
                               valueStyle,
                             ),
+
+                            // _infoItem(
+                            //   "Alamat",
+                            //   alamat != null
+                            //       ? "${alamat.addressLine1 ?? '-'}, "
+                            //             "${alamat.district ?? ''}, "
+                            //             "${alamat.city ?? ''}, "
+                            //             "${alamat.postalCode ?? ''}"
+                            //       : "-",
+                            //   labelStyle,
+                            //   valueStyle,
+                            // ),
                             _infoItem(
                               "Tanggal Pesanan",
-                              "28 Sep 2025",
+                              order.orderDate.split(' ')[0],
                               labelStyle,
                               valueStyle,
                             ),
                             _infoItem(
                               "Status Pembayaran",
-                              "Menunggu",
+                              order.activeHistory?.statusName ?? '-',
                               labelStyle,
-                              valueStyle.copyWith(color: Colors.orange),
+                              valueStyle.copyWith(
+                                color:
+                                    (order.activeHistory?.statusCode ==
+                                        'pending')
+                                    ? Colors.orange
+                                    : Colors.green,
+                              ),
                             ),
                             _infoItem(
                               "Sisa Belum Dibayar",
-                              "Rp 360.000",
+                              formatRupiah(order.remainingAmount),
                               labelStyle,
                               valueStyle,
                             ),
                           ],
                         ),
                       ),
-
                       const SizedBox(width: 16),
-
                       // Kolom kanan
                       SizedBox(
                         width: halfWidth,
@@ -277,31 +340,31 @@ class DetailSection extends StatelessWidget {
                           children: [
                             _infoItem(
                               "Pelanggan",
-                              "Limin",
+                              order.user?.name ?? '-',
                               labelStyle,
                               valueStyle,
                             ),
                             _infoItem(
                               "Nama Penerima",
-                              "Limin",
+                              order.user?.name ?? '-',
                               labelStyle,
                               valueStyle,
                             ),
                             _infoItem(
                               "Kota",
-                              "Pasuruan",
+                              "-",
                               labelStyle,
                               valueStyle,
-                            ),
+                            ), // bisa diisi alamat lengkap nanti
                             _infoItem(
                               "Total Harga",
-                              "Rp 360.000",
+                              formatRupiah(order.totalAmount),
                               labelStyle,
                               valueStyle,
                             ),
                             _infoItem(
                               "Jumlah Teralokasi",
-                              "Rp 0",
+                              formatRupiah(order.allocatedAmount),
                               labelStyle,
                               valueStyle,
                             ),

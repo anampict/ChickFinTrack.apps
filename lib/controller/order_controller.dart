@@ -74,6 +74,37 @@ class OrderController extends GetxController {
     }
   }
 
+  /// cari order di list berdasarkan ID
+  OrderModel? getOrderById(int id) {
+    try {
+      return orders.firstWhere((o) => o.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// fetch seluruh page sampai ketemu (kalau belum ada)
+  Future<OrderModel?> fetchOrderById(int id) async {
+    // 1. Cek di list yg sudah ada
+    OrderModel? exist = getOrderById(id);
+    if (exist != null) return exist;
+
+    // 2. Cari ke semua halaman
+    int last = pagination.value?['last_page'] ?? 1;
+
+    for (int page = 1; page <= last; page++) {
+      await fetchOrders(page: page);
+      exist = getOrderById(id);
+      if (exist != null) return exist;
+    }
+    return null;
+  }
+
+  /// pilih order
+  void selectOrder(int id) {
+    selectedOrder.value = getOrderById(id);
+  }
+
   // fetch detail order
   Future<void> fetchOrderDetail(int id) async {
     try {

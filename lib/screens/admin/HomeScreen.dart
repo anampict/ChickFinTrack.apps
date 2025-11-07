@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:intl/intl.dart';
+import 'package:my_app/controller/order_controller.dart';
 import 'package:my_app/routes/app_routes.dart';
-import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
-import 'package:my_app/screens/admin/produk/DataProduk.dart';
-import 'package:my_app/screens/admin/produk/DaftarKategoriProduk.dart';
-import 'package:my_app/screens/admin/produk/TambahProduk.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:get/get.dart';
 
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
@@ -21,10 +18,35 @@ class _HomescreenState extends State<Homescreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
+  final orderController = Get.put(OrderController());
+
+  @override
+  void initState() {
+    super.initState();
+    orderController.fetchOrders(page: 11);
+  }
+
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  String formatTanggal(String? tgl) {
+    if (tgl == null || tgl.isEmpty) return "-";
+
+    try {
+      // replace space → T supaya ISO valid
+      final normalized = tgl.replaceFirst(' ', 'T');
+
+      final dateTime = DateTime.parse(normalized);
+      final dd = dateTime.day.toString().padLeft(2, '0');
+      final mm = dateTime.month.toString().padLeft(2, '0');
+      final yyyy = dateTime.year.toString();
+      return "$dd-$mm-$yyyy";
+    } catch (e) {
+      return "-";
+    }
   }
 
   @override
@@ -214,7 +236,7 @@ class _HomescreenState extends State<Homescreen> {
             ),
           ),
 
-          // PAGEVIEW GRID
+          // PAGEVIEW
           SliverToBoxAdapter(
             child: SizedBox(
               height: 300,
@@ -263,7 +285,6 @@ class _HomescreenState extends State<Homescreen> {
                           "assets/icons/listtransaksi.svg",
                           "List Transaksi",
                         ),
-
                         _buildMenu(
                           "assets/icons/user.svg",
                           "Manajemen Pengguna",
@@ -278,7 +299,7 @@ class _HomescreenState extends State<Homescreen> {
             ),
           ),
 
-          // INDIKATOR
+          // PAGE INDICATOR
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 16),
@@ -297,7 +318,8 @@ class _HomescreenState extends State<Homescreen> {
               ),
             ),
           ),
-          //judul transaksi
+
+          // TITLE
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -314,109 +336,134 @@ class _HomescreenState extends State<Homescreen> {
           ),
 
           // LIST TRANSAKSI
-          SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+          Obx(() {
+            if (orderController.isLoading.value &&
+                orderController.orders.isEmpty) {
+              return const SliverToBoxAdapter(
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: CircularProgressIndicator(),
+                  ),
                 ),
-                child: Material(
-                  elevation: 2,
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.white,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(11),
-                    title: Text(
-                      "ID RPA00127$index",
-                      style: const TextStyle(
-                        fontFamily: "Second",
-                        fontWeight: FontWeight.w500,
+              );
+            }
+
+            return SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final order = orderController.orders[index];
+                print("Order date: ${order.orderDate}");
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: Material(
+                    elevation: 2,
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white,
+                    child: ListTile(
+                      onTap: () => Get.toNamed(
+                        AppRoutes.DetailPesanan,
+                        arguments: order,
                       ),
-                    ),
-                    subtitle: const Text(
-                      "Ayam Pejantan 0,5\ndll\nSelasa 06-Mei-2025",
-                    ),
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xff959595),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        "Menunggu",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: "Primary",
+                      contentPadding: const EdgeInsets.all(11),
+
+                      title: Text(
+                        order.orderNumber,
+                        style: const TextStyle(
+                          fontFamily: "Second",
                           fontWeight: FontWeight.w500,
-                          fontSize: 9,
+                        ),
+                      ),
+
+                      subtitle: Text(
+                        "${order.orderItems?.map((e) => e.product?.name).join(', ') ?? ''}\n"
+                        "${formatTanggal(order.orderDate)}",
+                      ),
+
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xff959595),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          order.activeHistory?.statusName ?? "Menunggu",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontFamily: "Primary",
+                            fontWeight: FontWeight.w500,
+                            fontSize: 9,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              );
-            }, childCount: 10),
-          ),
+                );
+              }, childCount: orderController.orders.length),
+            );
+          }),
         ],
       ),
     );
   }
+}
 
-  Widget _buildMenu(String iconPath, String label, {VoidCallback? onTap}) {
-    return Material(
-      color: Colors.white,
+Widget _buildMenu(String iconPath, String label, {VoidCallback? onTap}) {
+  return Material(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+    elevation: 2,
+    child: InkWell(
       borderRadius: BorderRadius.circular(16),
-      elevation: 2,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const SizedBox(height: 40),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: "Primary",
-                      ),
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: "Primary",
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-              ],
-            ),
-            Positioned(
-              top: -20,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFFA726),
-                    shape: BoxShape.circle,
-                  ),
-                  child: SvgPicture.asset(iconPath, width: 36, height: 36),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+          Positioned(
+            top: -20,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFA726),
+                  shape: BoxShape.circle,
                 ),
+                child: SvgPicture.asset(iconPath, width: 36, height: 36),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 }
 
 Widget _buildMenu2(String iconPath, String label) {

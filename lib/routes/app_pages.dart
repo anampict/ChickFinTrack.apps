@@ -1,11 +1,13 @@
 import 'package:get/get.dart';
 import 'package:my_app/controller/users_controller.dart';
+import 'package:my_app/data/models/order_model.dart';
 import 'package:my_app/data/models/product_model.dart';
 import 'package:my_app/navigation/MainNavigation.dart';
 import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/SplashScreen.dart';
 import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
 import 'package:my_app/screens/admin/buatpesanan/DaftarPesanan.dart';
+import 'package:my_app/screens/admin/buatpesanan/DetailPesanan.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/DaftarPengguna.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/TambahAlamat.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/TambahPengguna.dart';
@@ -31,6 +33,14 @@ class AppPages {
     //pesanan
     GetPage(name: AppRoutes.DaftarPesanan, page: () => const Daftarpesanan()),
     GetPage(name: AppRoutes.Pesanan, page: () => const Buatpesanan()),
+    GetPage(
+      name: AppRoutes.DetailPesanan,
+      page: () {
+        final order = Get.arguments as OrderModel;
+        return Detailpesanan(order: order);
+      },
+    ),
+
     //tambahkategori
     GetPage(name: AppRoutes.TambahKategori, page: () => const Tambahkategori()),
     //tambahproduk
