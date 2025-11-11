@@ -83,33 +83,43 @@ class InvoiceGenerator {
   }
 
   static pw.Widget _buildHeader() {
-    return pw.Column(
-      mainAxisAlignment: pw.MainAxisAlignment.center,
-      crossAxisAlignment: pw.CrossAxisAlignment.center,
-      children: [
-        pw.Text(
-          'AB Sejahtera',
-          style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-        ),
-        pw.Text(
-          '(Supplier Ayam)',
-          style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
-        ),
-        pw.SizedBox(height: 8),
-        pw.Text(
-          'Dsn. Kedawung, Desa Tunggulwulung, Kec.',
-          style: const pw.TextStyle(fontSize: 9),
-        ),
-        pw.Text(
-          'Pandaan, Pasuruan, Jawa Timur 67156',
-          style: const pw.TextStyle(fontSize: 9),
-        ),
-        pw.Text('Tel: 085655842030', style: const pw.TextStyle(fontSize: 9)),
-        pw.Text(
-          'absejahtera@gmail.com',
-          style: const pw.TextStyle(fontSize: 9),
-        ),
-      ],
+    return pw.Container(
+      alignment: pw.Alignment.center,
+      child: pw.Column(
+        mainAxisAlignment: pw.MainAxisAlignment.center,
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.Text(
+            'AB Sejahtera',
+            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.Text(
+            '(Supplier Ayam)',
+            style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+          ),
+          pw.SizedBox(height: 8),
+          pw.Text(
+            'Dsn. Kedawung, Desa Tunggulwulung, Kec.',
+            style: const pw.TextStyle(fontSize: 9),
+            textAlign: pw.TextAlign.center,
+          ),
+          pw.Text(
+            'Pandaan, Pasuruan, Jawa Timur 67156',
+            style: const pw.TextStyle(fontSize: 9),
+            textAlign: pw.TextAlign.center,
+          ),
+          pw.Text(
+            'Tel: 085655842030',
+            style: const pw.TextStyle(fontSize: 9),
+            textAlign: pw.TextAlign.center,
+          ),
+          pw.Text(
+            'absejahtera@gmail.com',
+            style: const pw.TextStyle(fontSize: 9),
+            textAlign: pw.TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
