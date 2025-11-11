@@ -177,11 +177,18 @@ class DaftarPengguna extends StatelessWidget {
                                     radius: 25,
                                     backgroundImage: user.avatar != null
                                         ? NetworkImage(user.avatar!)
-                                        : const AssetImage(
-                                                "assets/images/image.png",
-                                              )
-                                              as ImageProvider,
+                                        : null, // hilangkan AssetImage
+                                    child: user.avatar == null
+                                        ? const Icon(
+                                            Icons.person,
+                                            size: 30,
+                                            color: Colors.white,
+                                          )
+                                        : null, // tampilkan ikon jika tidak ada avatar
+                                    backgroundColor: Colors
+                                        .grey[400], // warna latar belakang ikon
                                   ),
+
                                   title: Text(
                                     user.name,
                                     style: const TextStyle(
