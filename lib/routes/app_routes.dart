@@ -13,4 +13,5 @@ class AppRoutes {
   static const DaftarPengguna = '/daftarpengguna';
   static const TambahPengguna = '/tambahpengguna';
   static const TambahAlamat = '/tambahalamat';
+  static const DashboardKeuangan = '/dashboarduang';
 }

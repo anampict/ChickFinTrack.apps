@@ -120,7 +120,7 @@ class Detailpengguna extends StatelessWidget {
                       height: 30,
                       child: ElevatedButton(
                         onPressed: () {
-                          // Aksi ketika tombol ditekan
+                          Get.toNamed(AppRoutes.DashboardKeuangan);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(

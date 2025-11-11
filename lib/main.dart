@@ -29,9 +29,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      // initialRoute: AppRoutes.SplashScreen,
-      // getPages: AppPages.pages,
-      home: ManajemenKeuangan(),
+      initialRoute: AppRoutes.SplashScreen,
+      getPages: AppPages.pages,
+      // home: ManajemenKeuangan(),
     );
   }
 }

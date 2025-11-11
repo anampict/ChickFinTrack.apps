@@ -85,7 +85,7 @@ class ManajemenKeuangan extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Text(
-          "Dashboard Keuangan Pelanggan",
+          "Dashboard Keuangan",
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -381,25 +381,55 @@ class _KreditPesananCard extends StatelessWidget {
                   ],
                 ),
               ),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(
-                  Icons.add,
-                  size: 14, // kecilkan agar proporsional
-                ),
-                label: const Text("Alokasi", style: TextStyle(fontSize: 12)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff4DD0E1),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+              Column(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(
+                      Icons.add,
+                      size: 14, // kecilkan agar proporsional
+                    ),
+                    label: const Text(
+                      "Alokasi",
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff4DD0E1),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4, // atur agar total tinggi sekitar 20
+                      ),
+                      minimumSize: const Size(0, 20), // tinggi tombol jadi 20
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4, // atur agar total tinggi sekitar 20
+                  ElevatedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(
+                      Icons.check_circle,
+                      size: 14, // kecilkan agar proporsional
+                    ),
+                    label: const Text(
+                      "Bayar Penuh",
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff55BC10),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4, // atur agar total tinggi sekitar 20
+                      ),
+                      minimumSize: const Size(0, 20), // tinggi tombol jadi 20
+                    ),
                   ),
-                  minimumSize: const Size(0, 20), // tinggi tombol jadi 20
-                ),
+                ],
               ),
             ],
           ),

@@ -5,14 +5,147 @@ import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/data/models/users_model.dart' as user_data;
 import 'package:my_app/data/models/order_model.dart';
 import 'package:my_app/data/models/users_model.dart';
+import 'package:my_app/screens/surat/SuratJalan.dart';
 
 class Detailpesanan extends StatelessWidget {
   final OrderModel order;
 
-  Detailpesanan({super.key, required this.order}) {
-    // Initialize UserController jika belum ada
+  Detailpesanan({super.key, required this.order});
+
+  String _getAlamatLengkap(AddressModel? alamat) {
+    if (alamat == null) return '-';
+
+    List<String> parts = [];
+    if (alamat.addressLine1.isNotEmpty) parts.add(alamat.addressLine1);
+    if (alamat.addressLine2 != null && alamat.addressLine2!.isNotEmpty) {
+      parts.add(alamat.addressLine2!);
+    }
+    if (alamat.city != null && alamat.city!.isNotEmpty) {
+      parts.add(alamat.city!);
+    }
+    if (alamat.postalCode != null && alamat.postalCode!.isNotEmpty) {
+      parts.add(alamat.postalCode!);
+    }
+
+    return parts.isNotEmpty ? parts.join(', ') : '-';
   }
 
+  AddressModel? _findAddress(user_data.UserModel? user, String userAddressId) {
+    if (user == null || user.addresses.isEmpty) return null;
+
+    try {
+      return user.addresses.firstWhere(
+        (a) => a.id.toString() == userAddressId.toString(),
+      );
+    } catch (e) {
+      try {
+        return user.addresses.firstWhere(
+          (a) => a.isDefault,
+          orElse: () => user.addresses.first,
+        );
+      } catch (e) {
+        return null;
+      }
+    }
+  }
+
+  Future<void> _generateDeliveryNote(BuildContext context) async {
+    try {
+      // Show loading
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+
+      final userController = Get.find<UserController>();
+
+      if (userController.userDetail.value?.id != order.userId) {
+        await userController.getUserDetail(order.userId);
+      }
+
+      final alamat = _findAddress(
+        userController.userDetail.value,
+        order.userAddressId,
+      );
+
+      // Prepare items data
+      final items =
+          order.orderItems?.map((item) {
+            return OrderItemData(
+              productName: item.product?.name ?? '-',
+              quantity: item.quantity,
+            );
+          }).toList() ??
+          [];
+
+      // Validasi items
+      if (items.isEmpty) {
+        Get.back(); // Close loading
+        Get.snackbar(
+          'Peringatan',
+          'Tidak ada item dalam pesanan',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Format tanggal kirim (hari ini)
+      final deliveryDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
+
+      // Generate catatan pengiriman
+      final notes = '''- Barang sudah diperiksa sebelum dikirim
+- Harap periksa kondisi barang saat menerima
+- Komplain maksimal 24 jam setelah barang diterima''';
+
+      // Close loading
+      Get.back();
+
+      // Generate and print
+      await DeliveryNoteGenerator.printDeliveryNote(
+        orderNumber: order.orderNumber,
+        customerName: order.user?.name ?? '-',
+        recipientName: alamat?.shippingName ?? order.user?.name ?? '-',
+        address: _getAlamatLengkap(alamat),
+        city: alamat?.city ?? '-',
+        postalCode: alamat?.postalCode ?? '-',
+        orderDate: order.orderDate,
+        deliveryDate: deliveryDate,
+        courier: order.courier?.name ?? 'test',
+        items: items,
+        notes: notes,
+      );
+
+      // Show success message
+      Get.snackbar(
+        'Berhasil',
+        'Surat jalan berhasil dibuat',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } catch (e) {
+      // Close loading if still open
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      // Show error message
+      Get.snackbar(
+        'Error',
+        'Gagal membuat surat jalan: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+      print('Error generating delivery note: $e');
+    }
+  }
+
+  // BUILD METHOD
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,7 +238,7 @@ class Detailpesanan extends StatelessWidget {
 
             // Tombol atas
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 5),
               child: Row(
                 children: [
                   OutlinedButton(
@@ -125,9 +258,9 @@ class Detailpesanan extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 5),
                   OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () => _generateDeliveryNote(context),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.black),
                       shape: RoundedRectangleBorder(
@@ -143,7 +276,7 @@ class Detailpesanan extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 6),
                   ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
@@ -168,7 +301,7 @@ class Detailpesanan extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Section: Detail Pesanan - Gunakan Obx untuk reactive update
+            // Section: Detail Pesanan
             DetailSection(order: order),
 
             // Section: Item Pesanan

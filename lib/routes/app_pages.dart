@@ -9,6 +9,7 @@ import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
 import 'package:my_app/screens/admin/buatpesanan/DaftarPesanan.dart';
 import 'package:my_app/screens/admin/buatpesanan/DetailPesanan.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/DaftarPengguna.dart';
+import 'package:my_app/screens/admin/manajemenpengguna/ManajemenKeuangan.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/TambahAlamat.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/TambahPengguna.dart';
 import 'package:my_app/screens/admin/produk/DataProduk.dart';
@@ -59,5 +60,10 @@ class AppPages {
     ),
     //tambahalamat
     GetPage(name: AppRoutes.TambahAlamat, page: () => const Tambahalamat()),
+    //dashboarduang
+    GetPage(
+      name: AppRoutes.DashboardKeuangan,
+      page: () => const ManajemenKeuangan(),
+    ),
   ];
 }

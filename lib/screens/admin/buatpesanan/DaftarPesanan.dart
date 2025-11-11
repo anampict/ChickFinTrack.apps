@@ -164,8 +164,10 @@ class Daftarpesanan extends StatelessWidget {
                                   children: [
                                     const CircleAvatar(
                                       radius: 20,
-                                      backgroundImage: AssetImage(
-                                        "assets/images/image.png",
+                                      backgroundColor: Colors.grey,
+                                      child: Icon(
+                                        Icons.person,
+                                        color: Colors.white,
                                       ),
                                     ),
                                     const SizedBox(width: 8),
