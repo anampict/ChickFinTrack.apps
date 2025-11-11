@@ -81,6 +81,7 @@ class UserModel {
   final int id;
   final String name;
   final String email;
+  final String phone;
   final String role;
   final List<AddressModel> addresses;
   final String addressLine1;
@@ -89,6 +90,7 @@ class UserModel {
     required this.id,
     required this.name,
     required this.email,
+    required this.phone,
     required this.role,
     required this.addresses,
     required this.addressLine1,
@@ -99,6 +101,7 @@ class UserModel {
     name: json['name'] ?? '',
     email: json['email'] ?? '',
     role: json['role'] ?? '',
+    phone: json['phone'] ?? '',
     addresses:
         (json['addresses'] as List<dynamic>?)
             ?.map((e) => AddressModel.fromJson(e))

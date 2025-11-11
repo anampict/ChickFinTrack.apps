@@ -5,6 +5,7 @@ import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/data/models/users_model.dart' as user_data;
 import 'package:my_app/data/models/order_model.dart';
 import 'package:my_app/data/models/users_model.dart';
+import 'package:my_app/screens/surat/Invoice.dart';
 import 'package:my_app/screens/surat/SuratJalan.dart';
 
 class Detailpesanan extends StatelessWidget {
@@ -48,6 +49,101 @@ class Detailpesanan extends StatelessWidget {
       }
     }
   }
+
+  Future<void> _generateInvoice(BuildContext context) async {
+    try {
+      final userController = Get.find<UserController>();
+
+      if (userController.userDetail.value?.id != order.userId) {
+        await userController.getUserDetail(order.userId);
+      }
+
+      final alamat = _findAddress(
+        userController.userDetail.value,
+        order.userAddressId,
+      );
+
+      final phoneNumber =
+          userController.userDetail.value?.phone ?? order.user?.phone ?? '-';
+
+      print("Phone from userDetail: ${userController.userDetail.value?.phone}");
+      print("Phone from order.user: ${order.user?.phone}");
+      print("Final phone number: $phoneNumber");
+
+      // Prepare items data untuk invoice
+      final invoiceItems =
+          order.orderItems?.map((item) {
+            return InvoiceItemData(
+              productName: item.product?.name ?? 'Unknown',
+              quantity: item.quantity,
+              unitPrice: item.priceAtPurchase.toInt(),
+              totalPrice: item.subtotal.toInt(),
+            );
+          }).toList() ??
+          [];
+
+      // Validasi items
+      if (invoiceItems.isEmpty) {
+        Get.back(); // Close loading
+        Get.snackbar(
+          'Peringatan',
+          'Tidak ada item dalam pesanan',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Close loading
+      Get.back();
+
+      // Generate and print invoice
+      await InvoiceGenerator.printInvoice(
+        orderNumber: order.orderNumber,
+        customerName: order.user?.name ?? '-',
+        recipientName: alamat?.shippingName ?? order.user?.name ?? '-',
+        address: alamat?.addressLine1 ?? '-',
+        city: alamat?.city ?? '-',
+        postalCode: alamat?.postalCode ?? '-',
+        phoneNumber: phoneNumber, // ← GANTI: Pakai phone dari UserModel
+        orderDate: order.orderDate,
+        courier: order.courier?.name ?? '-',
+        items: invoiceItems,
+        subtotal: order.totalAmount,
+        total: order.totalAmount,
+        notes: 'Terima kasih atas kepercayaan Anda!',
+      );
+
+      // Show success message
+      Get.snackbar(
+        'Berhasil',
+        'Invoice berhasil dibuat',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } catch (e) {
+      // Close loading if still open
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      // Show error message
+      Get.snackbar(
+        'Error',
+        'Gagal membuat invoice: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+      print('Error generating invoice: $e');
+    }
+  }
+
+  //surat jalan
 
   Future<void> _generateDeliveryNote(BuildContext context) async {
     try {
@@ -144,6 +240,8 @@ class Detailpesanan extends StatelessWidget {
       print('Error generating delivery note: $e');
     }
   }
+
+  //invoice
 
   // BUILD METHOD
   @override
@@ -242,7 +340,7 @@ class Detailpesanan extends StatelessWidget {
               child: Row(
                 children: [
                   OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () => _generateInvoice(context),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.black),
                       shape: RoundedRectangleBorder(
