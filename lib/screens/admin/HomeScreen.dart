@@ -291,6 +291,9 @@ class _HomescreenState extends State<Homescreen> {
                         _buildMenu(
                           "assets/icons/listtransaksi.svg",
                           "List Transaksi",
+                          onTap: () {
+                            Get.toNamed(AppRoutes.DaftarPesanan);
+                          },
                         ),
                         _buildMenu(
                           "assets/icons/user.svg",

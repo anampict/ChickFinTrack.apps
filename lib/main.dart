@@ -6,6 +6,7 @@ import 'package:my_app/screens/admin/buatpesanan/DaftarPesanan.dart';
 import 'package:my_app/screens/admin/buatpesanan/DetailPesanan.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/DaftarPengguna.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/DetailPengguna.dart';
+import 'package:my_app/screens/admin/manajemenpengguna/ManajemenKeuangan.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/TambahAlamat.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
@@ -28,9 +29,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      initialRoute: AppRoutes.SplashScreen,
-      getPages: AppPages.pages,
-      // home: const Detailpesanan(),
+      // initialRoute: AppRoutes.SplashScreen,
+      // getPages: AppPages.pages,
+      home: ManajemenKeuangan(),
     );
   }
 }

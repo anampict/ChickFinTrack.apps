@@ -112,8 +112,8 @@ class Daftarpesanan extends StatelessWidget {
               if (scrollInfo.metrics.pixels ==
                       scrollInfo.metrics.maxScrollExtent &&
                   !orderController.isLoadingMore.value &&
-                  orderController.currentPage.value <
-                      orderController.lastPage.value) {
+                  (orderController.pagination.value?['current_page'] ?? 1) <
+                      (orderController.pagination.value?['last_page'] ?? 1)) {
                 orderController.loadMoreOrders();
               }
               return false;
