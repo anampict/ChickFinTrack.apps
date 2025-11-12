@@ -106,7 +106,7 @@ class Detailpesanan extends StatelessWidget {
         address: alamat?.addressLine1 ?? '-',
         city: alamat?.city ?? '-',
         postalCode: alamat?.postalCode ?? '-',
-        phoneNumber: phoneNumber, // ← GANTI: Pakai phone dari UserModel
+        phoneNumber: phoneNumber, //  Pakai phone dari UserModel
         orderDate: order.orderDate,
         courier: order.courier?.name ?? '-',
         items: invoiceItems,
@@ -147,12 +147,6 @@ class Detailpesanan extends StatelessWidget {
 
   Future<void> _generateDeliveryNote(BuildContext context) async {
     try {
-      // Show loading
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false,
-      );
-
       final userController = Get.find<UserController>();
 
       if (userController.userDetail.value?.id != order.userId) {

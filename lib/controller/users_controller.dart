@@ -29,6 +29,9 @@ class UserController extends GetxController {
   var isLoadingCities = false.obs;
   var isLoadingDistricts = false.obs;
 
+  var userBalance = Rxn<BalanceModel>();
+  var isLoadingBalance = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -378,6 +381,63 @@ class UserController extends GetxController {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+    }
+  }
+
+  // Get user balance
+  Future<void> getUserBalance(int userId) async {
+    try {
+      isLoadingBalance.value = true;
+      final balance = await _repository.getUserBalance(userId);
+      userBalance.value = balance;
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Gagal memuat saldo: ${e.toString()}',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoadingBalance.value = false;
+    }
+  }
+
+  // Top up balance
+  Future<void> topUpBalance({
+    required int userId,
+    required double amount,
+    String? description,
+  }) async {
+    try {
+      isSubmitting.value = true;
+      final message = await _repository.topUpBalance(
+        userId: userId,
+        amount: amount,
+        description: description,
+      );
+
+      // Refresh balance after top up
+      await getUserBalance(userId);
+
+      Get.back(); // tutup dialog
+      Get.snackbar(
+        'Sukses',
+        'Top up saldo berhasil!',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Top up saldo gagal!!',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isSubmitting.value = false;
     }
   }
 }

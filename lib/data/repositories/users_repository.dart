@@ -77,4 +77,23 @@ class UserRepository {
   }) async {
     await UserApi.deleteAddress(userId: userId, addressId: addressId);
   }
+
+  // Get user balance
+  Future<BalanceModel> getUserBalance(int userId) async {
+    return await UserApi.getUserBalance(userId);
+  }
+
+  // Top up balance
+  Future<String> topUpBalance({
+    required int userId,
+    required double amount,
+    String? description,
+  }) async {
+    final response = await UserApi.topUpBalance(
+      userId: userId,
+      amount: amount,
+      description: description,
+    );
+    return response['message'] ?? 'Balance topped up successfully';
+  }
 }

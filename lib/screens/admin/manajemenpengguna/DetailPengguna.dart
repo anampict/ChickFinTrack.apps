@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/helper/utils.dart';
 import 'package:my_app/routes/app_routes.dart';
@@ -120,7 +121,12 @@ class Detailpengguna extends StatelessWidget {
                       height: 30,
                       child: ElevatedButton(
                         onPressed: () {
-                          Get.toNamed(AppRoutes.DashboardKeuangan);
+                          Get.toNamed(
+                            AppRoutes.DashboardKeuangan,
+                            arguments: {
+                              'userId': userId,
+                            }, // userId dari parameter class
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(

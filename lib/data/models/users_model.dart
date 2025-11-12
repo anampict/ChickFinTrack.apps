@@ -43,6 +43,36 @@ class UserModel {
   }
 }
 
+class BalanceModel {
+  final String currentBalance;
+  final String availableBalance;
+  final String reservedBalance;
+
+  BalanceModel({
+    required this.currentBalance,
+    required this.availableBalance,
+    required this.reservedBalance,
+  });
+
+  factory BalanceModel.fromJson(Map<String, dynamic> json) {
+    return BalanceModel(
+      currentBalance: json['current_balance']?.toString() ?? '0',
+      availableBalance: json['available_balance']?.toString() ?? '0',
+      reservedBalance: json['reserved_balance']?.toString() ?? '0',
+    );
+  }
+
+  // Helper untuk format currency
+  String get formattedCurrentBalance => formatCurrency(currentBalance);
+  String get formattedAvailableBalance => formatCurrency(availableBalance);
+  String get formattedReservedBalance => formatCurrency(reservedBalance);
+
+  static String formatCurrency(String amount) {
+    final value = double.tryParse(amount) ?? 0;
+    return 'Rp ${value.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+  }
+}
+
 class AddressModel {
   final int id;
   final String shippingName;

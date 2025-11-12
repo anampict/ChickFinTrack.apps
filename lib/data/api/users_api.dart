@@ -2,6 +2,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:my_app/data/api/api_config.dart';
+import 'package:my_app/data/models/users_model.dart';
 
 class UserApi {
   // get semua user
@@ -188,6 +189,54 @@ class UserApi {
 
     if (response.statusCode != 200) {
       throw Exception('Gagal menghapus alamat: ${response.body}');
+    }
+  }
+
+  // Get user balance
+  static Future<BalanceModel> getUserBalance(int userId) async {
+    final box = GetStorage();
+    final token = box.read('token');
+
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/users/$userId/balance'),
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return BalanceModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Gagal memuat saldo: ${response.body}');
+    }
+  }
+
+  // Top up user balance
+  static Future<Map<String, dynamic>> topUpBalance({
+    required int userId,
+    required double amount,
+    String? description,
+  }) async {
+    final box = GetStorage();
+    final token = box.read('token');
+
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/users/$userId/top-up'),
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'amount': amount,
+        'description': description ?? 'top up',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Gagal top up saldo: ${response.body}');
     }
   }
 }
