@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:my_app/controller/order_controller.dart';
 import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/helper/utils.dart';
 import 'package:my_app/routes/app_routes.dart';
+import 'package:my_app/screens/admin/buatpesanan/DetailPesanan.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/TambahAlamat.dart';
 
 class Detailpengguna extends StatelessWidget {
@@ -667,37 +669,224 @@ class _AlamatTab extends StatelessWidget {
 
 // ============ TAB PESANAN ============
 class _PesananTab extends StatelessWidget {
-  final List<Map<String, String>> dummyPesanan = [
-    {"kode": "#INV001", "tanggal": "12 Okt 2025", "status": "Selesai"},
-    {"kode": "#INV002", "tanggal": "10 Okt 2025", "status": "Dalam Proses"},
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: dummyPesanan.length,
-      itemBuilder: (context, index) {
-        final item = dummyPesanan[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ListTile(
-            title: Text(item['kode'] ?? ""),
-            subtitle: Text(item['tanggal'] ?? ""),
-            trailing: Text(
-              item['status'] ?? "",
-              style: TextStyle(
-                color: item['status'] == "Selesai"
-                    ? Colors.green
-                    : const Color(0xffF26D2B),
-                fontWeight: FontWeight.w600,
+    final userController = Get.find<UserController>();
+    final orderController = Get.put(OrderController());
+    final userId = userController.userDetail.value?.id;
+
+    // Load orders jika belum ada
+    if (orderController.orders.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        orderController.refreshOrders();
+      });
+    }
+
+    return Obx(() {
+      // Loading state
+      if (orderController.isLoading.value && orderController.orders.isEmpty) {
+        return const Center(
+          child: CircularProgressIndicator(color: Color(0xffF26D2B)),
+        );
+      }
+
+      // Filter orders berdasarkan userId
+      final userOrders = orderController.orders
+          .where((order) => order.userId == userId)
+          .toList();
+
+      // Empty state
+      if (userOrders.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.shopping_bag_outlined,
+                size: 64,
+                color: Colors.grey[400],
               ),
-            ),
+              const SizedBox(height: 16),
+              Text(
+                "Belum ada pesanan",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  fontFamily: "Primary",
+                ),
+              ),
+            ],
           ),
         );
-      },
-    );
+      }
+
+      // List pesanan
+      return RefreshIndicator(
+        onRefresh: () async {
+          await orderController.refreshOrders();
+        },
+        child: ListView.builder(
+          padding: const EdgeInsets.only(bottom: 16),
+          itemCount: userOrders.length,
+          itemBuilder: (context, index) {
+            final order = userOrders[index];
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10, right: 8, left: 8),
+              child: InkWell(
+                onTap: () {
+                  // Navigate ke detail pesanan
+                  Get.to(() => Detailpesanan(order: order));
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Material(
+                  elevation: 3,
+                  shadowColor: Colors.black26,
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header: Order number & Status
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                order.orderNumber,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  fontFamily: "Primary",
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(
+                                  order.activeHistory?.statusName,
+                                ).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                order.activeHistory?.statusName ??
+                                    'Tidak Diketahui',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: _getStatusColor(
+                                    order.activeHistory?.statusName,
+                                  ),
+                                  fontFamily: "Primary",
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Tanggal
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              size: 11,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              formatTanggal(DateTime.tryParse(order.orderDate)),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[600],
+                                fontFamily: "Primary",
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+
+                        // Kurir
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.local_shipping_outlined,
+                              size: 11,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                order.courier?.name ?? '-',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey[600],
+                                  fontFamily: "Primary",
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Total Harga
+                        Text(
+                          formatRupiah(order.totalAmount),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xffF26D2B),
+                            fontFamily: "Primary",
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    });
+  }
+
+  // Helper untuk warna status
+  Color _getStatusColor(String? status) {
+    if (status == null) return Colors.grey;
+
+    final statusLower = status.toLowerCase();
+
+    if (statusLower.contains('selesai') ||
+        statusLower.contains('completed') ||
+        statusLower.contains('delivered') ||
+        statusLower.contains('diterima')) {
+      return Colors.green;
+    } else if (statusLower.contains('pending') ||
+        statusLower.contains('menunggu') ||
+        statusLower.contains('diproses')) {
+      return Colors.orange;
+    } else if (statusLower.contains('batal') ||
+        statusLower.contains('cancel') ||
+        statusLower.contains('ditolak')) {
+      return Colors.red;
+    } else if (statusLower.contains('proses') ||
+        statusLower.contains('processing') ||
+        statusLower.contains('shipping') ||
+        statusLower.contains('kirim') ||
+        statusLower.contains('dikirim')) {
+      return const Color(0xffF26D2B);
+    }
+
+    return Colors.grey;
   }
 }

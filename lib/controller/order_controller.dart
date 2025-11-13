@@ -18,7 +18,7 @@ class OrderController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchOrders();
+    refreshOrders();
   }
 
   // fetch semua order

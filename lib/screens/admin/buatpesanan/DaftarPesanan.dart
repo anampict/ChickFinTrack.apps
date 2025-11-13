@@ -5,14 +5,17 @@ import 'package:my_app/data/models/order_model.dart';
 import 'package:my_app/helper/utils.dart';
 import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
-import 'package:my_app/screens/admin/buatpesanan/DetailPesanan.dart';
 
 class Daftarpesanan extends StatelessWidget {
   const Daftarpesanan({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final OrderController orderController = Get.put(OrderController());
+    final OrderController orderController = Get.put(
+      OrderController(),
+      permanent: false,
+    );
+
     final ScrollController scrollController = ScrollController();
 
     // listener scroll untuk load more
