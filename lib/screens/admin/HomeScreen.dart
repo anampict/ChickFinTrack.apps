@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:intl/intl.dart';
+import 'package:my_app/controller/dashboard_controller.dart';
 import 'package:my_app/controller/order_controller.dart';
 import 'package:my_app/controller/product_controller.dart';
 import 'package:my_app/controller/users_controller.dart';
@@ -26,6 +27,7 @@ class _HomescreenState extends State<Homescreen> {
     ProductController(repository: ProductRepository()),
   );
   final userController = Get.put(UserController());
+  final dashboardController = Get.put(DashboardController());
 
   @override
   void initState() {
@@ -113,97 +115,106 @@ class _HomescreenState extends State<Homescreen> {
         slivers: [
           // HEADER
           SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.all(12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Total transaksi bulan ini",
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontFamily: "Primary",
-                      color: Colors.black,
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Rp. 30.000.000",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                          fontFamily: "Primary",
-                        ),
+            child: Obx(() {
+              final isLoading = dashboardController.isLoading.value;
+              final dashboard = dashboardController.dashboard.value;
+
+              return Container(
+                margin: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Total transaksi bulan ini",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontFamily: "Primary",
+                        color: Colors.black,
                       ),
-                      SizedBox(
-                        width: 120,
-                        height: 30,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Tampilkan data dari API atau loading
+                        Text(
+                          isLoading
+                              ? "Loading..."
+                              : (dashboard?.formattedRevenue ?? "Rp. 0"),
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                            fontFamily: "Primary",
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SvgPicture.asset(
-                                "assets/icons/detail.svg",
-                                width: 10,
-                                height: 10,
-                                color: Colors.white,
+                        ),
+                        SizedBox(
+                          width: 120,
+                          height: 30,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Action untuk lihat detail
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                "Lihat Detail",
-                                style: TextStyle(
-                                  fontFamily: "Primary",
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 8,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SvgPicture.asset(
+                                  "assets/icons/detail.svg",
+                                  width: 10,
+                                  height: 10,
                                   color: Colors.white,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 8),
+                                const Text(
+                                  "Lihat Detail",
+                                  style: TextStyle(
+                                    fontFamily: "Primary",
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 8,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Jumlah pesanan hari ini",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontFamily: "Primary",
+                        color: Colors.black,
+                        fontWeight: FontWeight.w400,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "Jumlah pesanan hari ini",
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontFamily: "Primary",
-                      color: Colors.black,
-                      fontWeight: FontWeight.w400,
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  const Text(
-                    "120",
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontFamily: "Primary",
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
+                    const SizedBox(height: 5),
+                    Text(
+                      isLoading ? "..." : "${dashboard?.totalOrders ?? 0}",
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontFamily: "Primary",
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            ),
+                  ],
+                ),
+              );
+            }),
           ),
 
           // TAB ALOKASI
@@ -479,19 +490,18 @@ Widget _buildMenu(String iconPath, String label, {VoidCallback? onTap}) {
 Widget _buildMenu2() {
   final productController = Get.find<ProductController>();
   final userController = Get.find<UserController>();
-  final orderController = Get.find<OrderController>();
+  final dashboardController = Get.find<DashboardController>();
 
   return Obx(() {
     final produkCount = productController.products.length;
     final pelangganCount = userController.users.length;
-    final pesananCount = orderController.orders.length;
 
-    final revenue = orderController.orders.fold<int>(
-      0,
-      (sum, o) => sum + (o.totalAmount ?? 0),
-    );
+    // Data dari Dashboard API
+    final dashboard = dashboardController.dashboard.value;
+    final pesananCount = dashboard?.totalOrders ?? 0;
+    final revenue = dashboard?.totalRevenue ?? 0.0;
 
-    String formatRupiah(int amount) {
+    String formatRupiah(double amount) {
       final f = NumberFormat.currency(
         locale: 'id_ID',
         symbol: 'Rp ',
