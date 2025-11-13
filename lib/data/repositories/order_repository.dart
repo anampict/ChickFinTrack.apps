@@ -33,4 +33,23 @@ class OrderRepository {
       throw Exception(result['message'] ?? 'Gagal membuat pesanan');
     }
   }
+
+  // update order history
+  Future<bool> updateOrderHistory({
+    required int orderId,
+    required String statusCode,
+    String? notes,
+  }) async {
+    try {
+      final result = await OrderApi.updateOrderHistory(
+        orderId: orderId,
+        statusCode: statusCode,
+        notes: notes,
+      );
+      return result['success'] == true;
+    } catch (e) {
+      print('Error update history: $e');
+      rethrow;
+    }
+  }
 }

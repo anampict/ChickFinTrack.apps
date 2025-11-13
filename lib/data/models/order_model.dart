@@ -173,6 +173,7 @@ class ProductModel {
 
 class OrderHistoryModel {
   final int id;
+  final int orderId; // TAMBAHKAN INI
   final String statusCode;
   final String statusName;
   final String notes;
@@ -181,6 +182,7 @@ class OrderHistoryModel {
 
   OrderHistoryModel({
     required this.id,
+    required this.orderId, // TAMBAHKAN INI
     required this.statusCode,
     required this.statusName,
     required this.notes,
@@ -191,6 +193,7 @@ class OrderHistoryModel {
   factory OrderHistoryModel.fromJson(Map<String, dynamic> json) =>
       OrderHistoryModel(
         id: json['id'],
+        orderId: toIntSafe(json['order_id']), // TAMBAHKAN INI
         statusCode: json['status_code'] ?? '',
         statusName: json['status_name'] ?? '',
         notes: json['notes'] ?? '',

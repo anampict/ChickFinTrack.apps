@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../data/models/order_model.dart';
 import '../data/repositories/order_repository.dart';
@@ -152,6 +153,53 @@ class OrderController extends GetxController {
       return null;
     } finally {
       isCreating.value = false;
+    }
+  }
+
+  // Update order status
+  Future<bool> updateOrderStatus({
+    required int orderId,
+    required String statusCode,
+    String? notes,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      final success = await _repository.updateOrderHistory(
+        orderId: orderId,
+        statusCode: statusCode,
+        notes: notes,
+      );
+
+      if (success) {
+        // Refresh detail order setelah update
+        await fetchOrderDetail(orderId);
+
+        // Refresh list orders juga
+        await refreshOrders();
+
+        Get.snackbar(
+          'Berhasil',
+          'Status pesanan berhasil diubah',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      }
+
+      return success;
+    } catch (e) {
+      print('Error update order status: $e');
+      Get.snackbar(
+        'Error',
+        'Gagal mengubah status: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      isLoading.value = false;
     }
   }
 }

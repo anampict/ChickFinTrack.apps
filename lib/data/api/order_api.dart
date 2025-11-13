@@ -86,4 +86,38 @@ class OrderApi {
       );
     }
   }
+
+  // Update order history/status
+  static Future<Map<String, dynamic>> updateOrderHistory({
+    required int orderId,
+    required String statusCode,
+    String? notes,
+  }) async {
+    final box = GetStorage();
+    final token = box.read('token');
+
+    final body = {
+      "status_code": statusCode,
+      if (notes != null && notes.isNotEmpty) "notes": notes,
+    };
+
+    final response = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/order/$orderId/history'),
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      print('Update History Response: ${response.body}');
+      return decoded;
+    } else {
+      throw Exception(
+        'Gagal update status: ${response.statusCode} - ${response.body}',
+      );
+    }
+  }
 }

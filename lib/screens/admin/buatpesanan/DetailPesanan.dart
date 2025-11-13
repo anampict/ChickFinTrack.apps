@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:my_app/controller/order_controller.dart';
 import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/data/models/users_model.dart' as user_data;
 import 'package:my_app/data/models/order_model.dart';
@@ -400,7 +401,10 @@ class Detailpesanan extends StatelessWidget {
             ItemSection(orderItems: order.orderItems ?? []),
 
             // Section: Riwayat Status
-            RiwayatSection(orderHistories: order.orderHistories),
+            RiwayatSection(
+              orderId: order.id, // TAMBAHKAN INI
+              orderHistories: order.orderHistories,
+            ),
           ],
         ),
       ),
@@ -796,12 +800,19 @@ const _headerStyle = TextStyle(
 );
 
 class RiwayatSection extends StatelessWidget {
+  final int orderId;
   final List<OrderHistoryModel>? orderHistories;
 
-  const RiwayatSection({super.key, required this.orderHistories});
+  const RiwayatSection({
+    super.key,
+    required this.orderId,
+    required this.orderHistories,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final orderController = Get.find<OrderController>();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Card(
@@ -816,30 +827,39 @@ class RiwayatSection extends StatelessWidget {
               _riwayatTitle(context),
               const SizedBox(height: 12),
 
-              // Loop through order histories dari API
-              if (orderHistories != null && orderHistories!.isNotEmpty)
-                ...orderHistories!.map((history) {
-                  return _StatusCard(
-                    status: history.statusName,
-                    active: history.isActive ?? false,
-                    catatan: history.notes,
-                    waktu: _formatDate(history.createdAt),
+              // Gunakan Obx untuk auto update ketika selectedOrder berubah
+              Obx(() {
+                final histories =
+                    orderController.selectedOrder.value?.orderHistories ??
+                    orderHistories;
+
+                if (histories != null && histories.isNotEmpty) {
+                  return Column(
+                    children: histories.map((history) {
+                      return _StatusCard(
+                        status: history.statusName,
+                        active: history.isActive ?? false,
+                        catatan: history.notes ?? '-',
+                        waktu: _formatDate(history.createdAt),
+                      );
+                    }).toList(),
                   );
-                }).toList()
-              else
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(
-                    child: Text(
-                      "Tidak ada riwayat status",
-                      style: TextStyle(
-                        fontFamily: "Primary",
-                        fontSize: 12,
-                        color: Colors.grey,
+                } else {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(
+                      child: Text(
+                        "Tidak ada riwayat status",
+                        style: TextStyle(
+                          fontFamily: "Primary",
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                }
+              }),
             ],
           ),
         ),
@@ -880,7 +900,47 @@ class RiwayatSection extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
         ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+            print('Button clicked - orderId: $orderId');
+
+            if (orderId == 0) {
+              Get.snackbar(
+                'Error',
+                'Order ID tidak valid',
+                snackPosition: SnackPosition.TOP,
+                backgroundColor: Colors.red,
+                colorText: Colors.white,
+              );
+              return;
+            }
+
+            if (orderHistories == null || orderHistories!.isEmpty) {
+              Get.snackbar(
+                'Peringatan',
+                'Tidak ada data riwayat',
+                snackPosition: SnackPosition.TOP,
+                backgroundColor: Colors.orange,
+                colorText: Colors.white,
+              );
+              return;
+            }
+
+            // Ambil status terakhir yang aktif
+            final currentHistory = orderHistories!.firstWhere(
+              (h) => h.isActive ?? false,
+              orElse: () => orderHistories!.first,
+            );
+
+            print('🔍 Current status: ${currentHistory.statusCode}');
+
+            // Tampilkan dialog
+            Get.dialog(
+              UpdateStatusDialog(
+                orderId: orderId,
+                currentStatus: currentHistory.statusCode,
+              ),
+            );
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xffF26D2B),
             shape: RoundedRectangleBorder(
@@ -916,7 +976,6 @@ class _StatusCard extends StatelessWidget {
     required this.waktu,
   });
 
-  /// ROW LINE
   Widget _row(String title, Widget value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
@@ -944,7 +1003,6 @@ class _StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        /// STATUS (text biasa)
         _row(
           "Status",
           Text(
@@ -957,8 +1015,6 @@ class _StatusCard extends StatelessWidget {
             ),
           ),
         ),
-
-        /// AKTIF (icon kiri, tidak center)
         _row(
           "Aktif",
           Row(
@@ -971,8 +1027,6 @@ class _StatusCard extends StatelessWidget {
             ],
           ),
         ),
-
-        /// CATATAN
         _row(
           "Catatan",
           Text(
@@ -980,8 +1034,6 @@ class _StatusCard extends StatelessWidget {
             style: const TextStyle(fontSize: 13, fontFamily: "Primary"),
           ),
         ),
-
-        /// WAKTU
         _row(
           "Waktu",
           Text(
@@ -993,10 +1045,277 @@ class _StatusCard extends StatelessWidget {
             ),
           ),
         ),
-
         const SizedBox(height: 12),
         Divider(color: Colors.grey.shade300, thickness: 1, height: 20),
       ],
     );
+  }
+}
+
+class UpdateStatusDialog extends StatefulWidget {
+  final int orderId;
+  final String currentStatus;
+
+  const UpdateStatusDialog({
+    super.key,
+    required this.orderId,
+    required this.currentStatus,
+  });
+
+  @override
+  State<UpdateStatusDialog> createState() => _UpdateStatusDialogState();
+}
+
+class _UpdateStatusDialogState extends State<UpdateStatusDialog> {
+  String? selectedStatus;
+  final TextEditingController notesController = TextEditingController();
+  final orderController = Get.find<OrderController>();
+
+  // Daftar status TETAP BAHASA INGGRIS
+  final List<Map<String, String>> statusOptions = [
+    {'code': 'pending', 'label': 'Pending'},
+    {'code': 'confirmed', 'label': 'Dikonfirmasi'},
+    {'code': 'processing', 'label': 'Diproses'},
+    {'code': 'shipped', 'label': 'Dikirim'},
+    {'code': 'delivered', 'label': 'Terkirim'},
+    {'code': 'cancelled', 'label': 'Dibatalkan'},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    selectedStatus = widget.currentStatus;
+    print('UpdateStatusDialog init - orderId: ${widget.orderId}');
+    print('UpdateStatusDialog init - currentStatus: ${widget.currentStatus}');
+  }
+
+  @override
+  void dispose() {
+    notesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 400),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Ubah Status Pesanan",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "Primary",
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.close),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Dropdown Status
+            const Text(
+              "Pilih Status",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                fontFamily: "Primary",
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: selectedStatus,
+                  items: statusOptions.map((status) {
+                    return DropdownMenuItem<String>(
+                      value: status['code'],
+                      child: Text(
+                        status['label']!,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontFamily: "Primary",
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedStatus = value;
+                    });
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // TextField Catatan
+            const Text(
+              "Catatan (Opsional)",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                fontFamily: "Primary",
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: notesController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: "Tambahkan catatan...",
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontFamily: "Primary",
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xffF26D2B)),
+                ),
+                contentPadding: const EdgeInsets.all(12),
+              ),
+              style: const TextStyle(fontSize: 14, fontFamily: "Primary"),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Get.back(),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.grey),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text(
+                      "Batal",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: "Primary",
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Obx(() {
+                    return ElevatedButton(
+                      onPressed: orderController.isLoading.value
+                          ? null
+                          : () => _handleUpdate(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xffF26D2B),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: orderController.isLoading.value
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              "Simpan",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: "Primary",
+                                color: Colors.white,
+                              ),
+                            ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleUpdate() async {
+    if (selectedStatus == null) {
+      Get.snackbar(
+        'Peringatan',
+        'Pilih status terlebih dahulu',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    print('Handle Update - orderId: ${widget.orderId}');
+    print('Handle Update - statusCode: $selectedStatus');
+    print('Handle Update - notes: ${notesController.text.trim()}');
+
+    final success = await orderController.updateOrderStatus(
+      orderId: widget.orderId,
+      statusCode: selectedStatus!,
+      notes: notesController.text.trim().isEmpty
+          ? null
+          : notesController.text.trim(),
+    );
+
+    if (success) {
+      // Close dialog
+      Get.back();
+
+      // Tampilkan snackbar sukses
+      Get.snackbar(
+        'Berhasil',
+        'Status pesanan berhasil diubah menjadi $selectedStatus',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    }
   }
 }
