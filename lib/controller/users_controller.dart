@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:my_app/data/models/credit_model.dart';
 import 'package:my_app/data/models/users_model.dart';
 import 'package:my_app/data/repositories/users_repository.dart';
 
@@ -31,6 +32,14 @@ class UserController extends GetxController {
 
   var userBalance = Rxn<BalanceModel>();
   var isLoadingBalance = false.obs;
+
+  //credit
+  var userCredits = <CreditModel>[].obs;
+  var isLoadingCredits = false.obs;
+  var isLoadMoreCredits = false.obs;
+  var creditCurrentPage = 1.obs;
+  var creditLastPage = 1.obs;
+  var totalCredits = 0.obs;
 
   @override
   void onInit() {
@@ -432,6 +441,151 @@ class UserController extends GetxController {
       Get.snackbar(
         'Error',
         'Top up saldo gagal!!',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
+
+  // Get user credits
+  Future<void> getUserCredits(int userId) async {
+    try {
+      isLoadingCredits.value = true;
+      creditCurrentPage.value = 1;
+
+      final result = await _repository.getUserCredits(
+        userId: userId,
+        page: creditCurrentPage.value,
+      );
+
+      final credits = result['credits'] as List<CreditModel>;
+      userCredits.assignAll(credits);
+      creditLastPage.value = result['last_page'];
+      totalCredits.value = result['total'];
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Gagal memuat data kredit: ${e.toString()}',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoadingCredits.value = false;
+    }
+  }
+
+  // Load more credits (pagination)
+  Future<void> loadMoreCredits(int userId) async {
+    if (isLoadMoreCredits.value ||
+        creditCurrentPage.value >= creditLastPage.value) {
+      return;
+    }
+
+    try {
+      isLoadMoreCredits.value = true;
+      creditCurrentPage.value++;
+
+      final result = await _repository.getUserCredits(
+        userId: userId,
+        page: creditCurrentPage.value,
+      );
+
+      final credits = result['credits'] as List<CreditModel>;
+      userCredits.addAll(credits);
+    } catch (e) {
+      print('Error load more credits: $e');
+    } finally {
+      isLoadMoreCredits.value = false;
+    }
+  }
+
+  // Get total piutang (kredit yang belum lunas)
+  double get totalPiutang {
+    return userCredits
+        .where((credit) => credit.status.toLowerCase() != 'paid')
+        .fold(0.0, (sum, credit) {
+          final remaining = double.tryParse(credit.remainingAmount) ?? 0;
+          return sum + remaining;
+        });
+  }
+
+  String get formattedTotalPiutang {
+    return 'Rp ${totalPiutang.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+  }
+
+  // Allocate credit
+  Future<void> allocateCredit({
+    required int userId,
+    required int orderCreditId,
+    required double amount,
+    String? description,
+  }) async {
+    try {
+      isSubmitting.value = true;
+
+      final result = await _repository.allocateCredit(
+        userId: userId,
+        orderCreditId: orderCreditId,
+        amount: amount,
+        description: description,
+      );
+
+      // Update balance dari response
+      if (result['data'] != null && result['data']['balance'] != null) {
+        userBalance.value = BalanceModel.fromJson(result['data']['balance']);
+      }
+
+      // Update credit di list
+      if (result['data'] != null && result['data']['order_credit'] != null) {
+        final updatedCredit = CreditModel.fromJson(
+          result['data']['order_credit'],
+        );
+        final index = userCredits.indexWhere((c) => c.id == orderCreditId);
+        if (index != -1) {
+          userCredits[index] = updatedCredit;
+          userCredits.refresh();
+        }
+      }
+
+      Get.back(); // tutup dialog
+      Get.snackbar(
+        'Sukses',
+        result['message'] ?? 'Alokasi berhasil',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      // Refresh data
+      await getUserCredits(userId);
+      await getUserBalance(userId);
+    } catch (e) {
+      print('Error allocate credit: $e');
+
+      // Parse error message dari backend
+      String errorMessage = 'Gagal mengalokasikan saldo';
+      try {
+        if (e.toString().contains(
+          'Order credit does not belong to this user',
+        )) {
+          errorMessage = 'Kredit pesanan tidak sesuai dengan user ini';
+        } else if (e.toString().contains('{')) {
+          final jsonStart = e.toString().indexOf('{');
+          final jsonStr = e.toString().substring(jsonStart);
+          final errorData = jsonDecode(jsonStr);
+          errorMessage = errorData['message'] ?? errorMessage;
+        }
+      } catch (_) {
+        errorMessage = e.toString();
+      }
+
+      Get.snackbar(
+        'Error',
+        errorMessage,
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
         colorText: Colors.white,

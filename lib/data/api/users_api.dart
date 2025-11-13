@@ -239,4 +239,57 @@ class UserApi {
       throw Exception('Gagal top up saldo: ${response.body}');
     }
   }
+
+  // Get user credits
+  static Future<Map<String, dynamic>> getUserCredits({
+    required int userId,
+    int page = 1,
+  }) async {
+    final box = GetStorage();
+    final token = box.read('token');
+
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/users/$userId/credit?page=$page'),
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Gagal memuat data kredit: ${response.body}');
+    }
+  }
+
+  // Allocate balance to order credit
+  static Future<Map<String, dynamic>> allocateCredit({
+    required int userId,
+    required int orderCreditId,
+    required double amount,
+    String? description,
+  }) async {
+    final box = GetStorage();
+    final token = box.read('token');
+
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/users/$userId/allocation'),
+      headers: {
+        ...ApiConfig.headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'order_credit_id': orderCreditId,
+        'amount': amount,
+        'description': description ?? 'bayar',
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Gagal mengalokasikan saldo: ${response.body}');
+    }
+  }
 }

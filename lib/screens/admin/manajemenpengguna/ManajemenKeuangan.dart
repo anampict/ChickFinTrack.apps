@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:my_app/controller/users_controller.dart';
+import 'package:my_app/data/models/credit_model.dart';
 
 class ManajemenKeuangan extends StatefulWidget {
   const ManajemenKeuangan({super.key});
@@ -31,6 +32,7 @@ class _ManajemenKeuanganState extends State<ManajemenKeuangan> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         controller.getUserBalance(userId!);
         controller.getUserDetail(userId!);
+        controller.getUserCredits(userId!).then((_) {});
       });
     } else {
       // Tampilkan pesan error jika user ID tidak ditemukan
@@ -199,13 +201,27 @@ class _ManajemenKeuanganState extends State<ManajemenKeuangan> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: _SaldoCard(
-              amount: balance?.formattedReservedBalance ?? "Rp 0",
-              label: "Total Piutang",
-              subtitle: "Pesanan yang belum terbayar",
-              color: Colors.red[200]!,
-              textColor: Colors.white,
-            ),
+            child: Obx(() {
+              // Hitung total piutang dari credits
+              final totalPiutang = controller.userCredits
+                  .where((credit) => credit.status.toLowerCase() != 'paid')
+                  .fold(0.0, (sum, credit) {
+                    final remaining =
+                        double.tryParse(credit.remainingAmount) ?? 0;
+                    return sum + remaining;
+                  });
+
+              final formattedPiutang =
+                  'Rp ${totalPiutang.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+
+              return _SaldoCard(
+                amount: formattedPiutang,
+                label: "Total Piutang",
+                subtitle: "Pesanan yang belum terbayar",
+                color: Colors.red[200]!,
+                textColor: Colors.white,
+              );
+            }),
           ),
         ],
       );
@@ -498,60 +514,620 @@ class _ManajemenKeuanganState extends State<ManajemenKeuangan> {
   }
 
   Widget _buildKreditPesananSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "List Kredit Pesanan",
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+    return Obx(() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "List Kredit Pesanan",
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+              if (controller.totalCredits.value > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${controller.totalCredits.value} Kredit',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.orange[800],
+                    ),
+                  ),
+                ),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          decoration: InputDecoration(
-            hintText: "cari id pesanan",
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-            prefixIcon: Icon(Icons.search, color: Colors.grey[400], size: 20),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
+          const SizedBox(height: 12),
+
+          // Search field
+          TextField(
+            onChanged: (value) => _filterCredits(value),
+            decoration: InputDecoration(
+              hintText: "cari id pesanan",
+              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+              prefixIcon: Icon(Icons.search, color: Colors.grey[400], size: 20),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
             ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          const SizedBox(height: 12),
+
+          // Loading state
+          if (controller.isLoadingCredits.value)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          // Empty state
+          else if (controller.userCredits.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.credit_card_off,
+                      size: 48,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Belum ada data kredit',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          // Credit list
+          else
+            Column(
+              children: [
+                // 🔥 Filter hanya yang remaining > 0 atau tampilkan semua dengan status berbeda
+                ...controller.userCredits.map((credit) {
+                  final remaining =
+                      double.tryParse(credit.remainingAmount) ?? 0;
+                  final isLunas =
+                      remaining <= 0 || credit.status.toLowerCase() == 'paid';
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _KreditPesananCard(
+                      credit: credit,
+                      isLunas: isLunas, // 🔥 Pass status lunas
+                      onAlokasi: isLunas
+                          ? () {
+                              // Tampilkan info jika sudah lunas
+                              Get.snackbar(
+                                'Info',
+                                'Kredit ini sudah lunas',
+                                snackPosition: SnackPosition.TOP,
+                                backgroundColor: Colors.blue,
+                                colorText: Colors.white,
+                              );
+                            }
+                          : () => _showAlokasiDialog(credit),
+                      onBayarPenuh: isLunas
+                          ? () {
+                              Get.snackbar(
+                                'Info',
+                                'Kredit ini sudah lunas',
+                                snackPosition: SnackPosition.TOP,
+                                backgroundColor: Colors.blue,
+                                colorText: Colors.white,
+                              );
+                            }
+                          : () => _showBayarPenuhDialog(credit),
+                    ),
+                  );
+                }).toList(),
+
+                // Load more button
+                if (controller.creditCurrentPage.value <
+                    controller.creditLastPage.value)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: controller.isLoadMoreCredits.value
+                        ? const Center(child: CircularProgressIndicator())
+                        : TextButton(
+                            onPressed: () {
+                              if (userId != null) {
+                                controller.loadMoreCredits(userId!);
+                              }
+                            },
+                            child: const Text('Muat Lebih Banyak'),
+                          ),
+                  ),
+              ],
+            ),
+        ],
+      );
+    });
+  }
+
+  // Filter credits berdasarkan search
+  void _filterCredits(String query) {
+    // TODO: Implement search filter jika diperlukan
+    // Bisa menggunakan .where() untuk filter userCredits
+  }
+
+  // Dialog untuk alokasi
+  void _showAlokasiDialog(CreditModel credit) {
+    if (userId == null) {
+      Get.snackbar(
+        'Error',
+        'User ID tidak ditemukan',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // 🔥 Validasi awal - cek remaining
+    final remaining = double.tryParse(credit.remainingAmount) ?? 0;
+    if (remaining <= 0) {
+      Get.snackbar(
+        'Info',
+        'Kredit ini sudah lunas',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.blue,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // 🔥 Cek status
+    if (credit.status.toLowerCase() == 'paid') {
+      Get.snackbar(
+        'Info',
+        'Kredit ini sudah lunas',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.blue,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final amountController = TextEditingController();
+    final descriptionController = TextEditingController(text: 'bayar');
+    final formKey = GlobalKey<FormState>();
+
+    Get.dialog(
+      AlertDialog(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Alokasi Kredit',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              credit.order?.orderNumber ?? "-",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Info saldo tersedia
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Saldo Tersedia:',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        Obx(
+                          () => Text(
+                            controller
+                                    .userBalance
+                                    .value
+                                    ?.formattedAvailableBalance ??
+                                'Rp 0',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Sisa Kredit:',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        Text(
+                          credit.formattedRemainingAmount,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Input jumlah
+              TextFormField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Jumlah Alokasi',
+                  prefixText: 'Rp ',
+                  border: OutlineInputBorder(),
+                  hintText: 'Masukkan jumlah',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Jumlah harus diisi';
+                  }
+                  final amount = double.tryParse(
+                    value.replaceAll('.', '').replaceAll(',', ''),
+                  );
+                  if (amount == null || amount <= 0) {
+                    return 'Jumlah harus lebih dari 0';
+                  }
+
+                  // Validasi: tidak boleh melebihi sisa kredit
+                  if (amount > remaining) {
+                    return 'Jumlah melebihi sisa kredit (max: Rp ${remaining.toStringAsFixed(0)})';
+                  }
+
+                  // Validasi: tidak boleh melebihi saldo tersedia
+                  final availableBalance =
+                      double.tryParse(
+                        controller.userBalance.value?.availableBalance ?? '0',
+                      ) ??
+                      0;
+                  if (amount > availableBalance) {
+                    return 'Saldo tidak mencukupi';
+                  }
+
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Input keterangan
+              TextFormField(
+                controller: descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Keterangan',
+                  border: OutlineInputBorder(),
+                  hintText: 'Contoh: bayar',
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 12),
-        _KreditPesananCard(
-          nomorPesanan: "#AB/23102025/0153",
-          tanggal: "23/10 12:47",
-          totalKredit: "Rp 460.000",
-          teralokasi: "Rp 1.000.000",
-          sisa: "Rp 480.000",
-          sisaColor: Colors.orange,
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Batal')),
+          Obx(
+            () => ElevatedButton(
+              onPressed: controller.isSubmitting.value
+                  ? null
+                  : () {
+                      if (formKey.currentState!.validate()) {
+                        final amount = double.parse(
+                          amountController.text
+                              .replaceAll('.', '')
+                              .replaceAll(',', ''),
+                        );
+
+                        // 🔥 Double check sebelum submit
+                        if (amount > remaining) {
+                          Get.snackbar(
+                            'Error',
+                            'Jumlah melebihi sisa kredit',
+                            snackPosition: SnackPosition.TOP,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
+                        controller.allocateCredit(
+                          userId: userId!,
+                          orderCreditId: credit.id,
+                          amount: amount,
+                          description: descriptionController.text.isEmpty
+                              ? 'bayar'
+                              : descriptionController.text,
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff4DD0E1),
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey,
+              ),
+              child: controller.isSubmitting.value
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text('Alokasi'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Dialog untuk bayar penuh
+  void _showBayarPenuhDialog(CreditModel credit) {
+    if (userId == null) {
+      Get.snackbar(
+        'Error',
+        'User ID tidak ditemukan',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final descriptionController = TextEditingController(text: 'bayar penuh');
+
+    // Hitung sisa yang harus dibayar
+    final remaining = double.tryParse(credit.remainingAmount) ?? 0;
+    final availableBalance =
+        double.tryParse(
+          controller.userBalance.value?.availableBalance ?? '0',
+        ) ??
+        0;
+
+    Get.dialog(
+      AlertDialog(
+        title: const Text(
+          'Konfirmasi Pembayaran Penuh',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 12),
-        _KreditPesananCard(
-          nomorPesanan: "#AB/23102025/0153",
-          tanggal: "23/10 12:47",
-          totalKredit: "Rp 1.460.000",
-          teralokasi: "Rp 1.000.000",
-          sisa: "Rp 460.000",
-          sisaColor: Colors.red,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Nomor Pesanan: ${credit.order?.orderNumber ?? "-"}',
+              style: const TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  _buildInfoRow('Total Kredit', credit.formattedTotalAmount),
+                  const Divider(),
+                  _buildInfoRow('Teralokasi', credit.formattedAllocatedAmount),
+                  const Divider(),
+                  _buildInfoRow(
+                    'Sisa yang Harus Dibayar',
+                    credit.formattedRemainingAmount,
+                    valueColor: Colors.red,
+                    isBold: true,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: availableBalance >= remaining
+                    ? Colors.green[50]
+                    : Colors.red[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Saldo Tersedia:', style: TextStyle(fontSize: 13)),
+                  Obx(
+                    () => Text(
+                      controller.userBalance.value?.formattedAvailableBalance ??
+                          'Rp 0',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: availableBalance >= remaining
+                            ? Colors.green
+                            : Colors.red,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Keterangan
+            TextField(
+              controller: descriptionController,
+              decoration: const InputDecoration(
+                labelText: 'Keterangan',
+                border: OutlineInputBorder(),
+                hintText: 'Contoh: bayar penuh',
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Warning jika saldo tidak cukup
+            if (availableBalance < remaining)
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.red[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning, color: Colors.red[700], size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Saldo tidak mencukupi untuk membayar penuh',
+                        style: TextStyle(fontSize: 12, color: Colors.red[700]),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.green[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      color: Colors.green[700],
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Saldo mencukupi untuk pembayaran penuh',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
-        const SizedBox(height: 12),
-        _KreditPesananCard(
-          nomorPesanan: "#AB/23102025/0153",
-          tanggal: "",
-          totalKredit: "",
-          teralokasi: "Rp 1.000.000",
-          sisa: "",
-          sisaColor: Colors.blue,
-        ),
-      ],
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Batal')),
+          Obx(
+            () => ElevatedButton(
+              onPressed:
+                  (controller.isSubmitting.value ||
+                      availableBalance < remaining)
+                  ? null
+                  : () {
+                      // PERBAIKAN: Gunakan allocateCredit dengan amount = remaining
+                      controller.allocateCredit(
+                        userId: userId!,
+                        orderCreditId: credit.id,
+                        amount:
+                            remaining, // Kirim amount = sisa yang harus dibayar
+                        description: descriptionController.text.isEmpty
+                            ? 'bayar penuh'
+                            : descriptionController.text,
+                      );
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff55BC10),
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey,
+              ),
+              child: controller.isSubmitting.value
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text('Bayar Penuh'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper widget untuk info row
+  Widget _buildInfoRow(
+    String label,
+    String value, {
+    Color? valueColor,
+    bool isBold = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 13)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
+              color: valueColor ?? Colors.black,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -637,35 +1213,55 @@ class _SaldoCard extends StatelessWidget {
 
 // Widget terpisah untuk Kredit Pesanan Card
 class _KreditPesananCard extends StatelessWidget {
-  final String nomorPesanan;
-  final String tanggal;
-  final String totalKredit;
-  final String teralokasi;
-  final String sisa;
-  final Color sisaColor;
-  final String status; // Tambahkan parameter status
-  final Color statusColor; // Warna background status
-  final Color statusTextColor; // Warna text status
+  final CreditModel credit;
+  final bool isLunas; // 🔥 Tambahkan parameter
+  final VoidCallback onAlokasi;
+  final VoidCallback onBayarPenuh;
 
   const _KreditPesananCard({
-    required this.nomorPesanan,
-    required this.tanggal,
-    required this.totalKredit,
-    required this.teralokasi,
-    required this.sisa,
-    required this.sisaColor,
-    this.status = "Sisa", // Default status
-    this.statusColor = const Color(0xFFE3F2FD), // Default background biru muda
-    this.statusTextColor = const Color(0xFF1565C0), // Default text biru tua
+    required this.credit,
+    required this.isLunas, // 🔥 Required
+    required this.onAlokasi,
+    required this.onBayarPenuh,
   });
 
   @override
   Widget build(BuildContext context) {
+    final order = credit.order;
+
+    // Format tanggal
+    String formattedDate = '';
+    try {
+      final date = DateTime.parse(credit.createdAt);
+      formattedDate =
+          '${date.day}/${date.month} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      formattedDate = '';
+    }
+
+    // Determine sisa color
+    Color sisaColor = Colors.blue;
+    final remaining = double.tryParse(credit.remainingAmount) ?? 0;
+    final total = double.tryParse(credit.totalAmount) ?? 1;
+    final percentage = total > 0 ? (remaining / total) * 100 : 0;
+
+    if (percentage > 50) {
+      sisaColor = Colors.red;
+    } else if (percentage > 20) {
+      sisaColor = Colors.orange;
+    } else {
+      sisaColor = Colors.blue;
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
+        // 🔥 Tambah border jika sudah lunas
+        border: isLunas
+            ? Border.all(color: Colors.green[300]!, width: 2)
+            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
@@ -676,6 +1272,33 @@ class _KreditPesananCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // 🔥 Badge "LUNAS" jika sudah lunas
+          if (isLunas)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.green[50],
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.green[300]!),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green[700], size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'LUNAS',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -683,17 +1306,17 @@ class _KreditPesananCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildInfoRow("Nomor pesanan", nomorPesanan),
-                    if (tanggal.isNotEmpty) const SizedBox(height: 8),
-                    if (tanggal.isNotEmpty) _buildInfoRow("Tanggal", tanggal),
-                    if (totalKredit.isNotEmpty) const SizedBox(height: 8),
-                    if (totalKredit.isNotEmpty)
-                      _buildInfoRow(
-                        "Total Kredit",
-                        totalKredit,
-                        valueColor: Colors.black,
-                        isBold: true,
-                      ),
+                    _buildInfoRow("Nomor pesanan", order?.orderNumber ?? "-"),
+                    if (formattedDate.isNotEmpty) const SizedBox(height: 8),
+                    if (formattedDate.isNotEmpty)
+                      _buildInfoRow("Tanggal", formattedDate),
+                    const SizedBox(height: 8),
+                    _buildInfoRow(
+                      "Total Kredit",
+                      credit.formattedTotalAmount,
+                      valueColor: Colors.black,
+                      isBold: true,
+                    ),
                   ],
                 ),
               ),
@@ -702,15 +1325,17 @@ class _KreditPesananCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildInfoRow("Teralokasi", teralokasi),
-                    if (sisa.isNotEmpty) const SizedBox(height: 8),
-                    if (sisa.isNotEmpty)
-                      _buildInfoRow(
-                        "Sisa",
-                        sisa,
-                        valueColor: sisaColor,
-                        isBold: true,
-                      ),
+                    _buildInfoRow(
+                      "Teralokasi",
+                      credit.formattedAllocatedAmount,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildInfoRow(
+                      "Sisa",
+                      credit.formattedRemainingAmount,
+                      valueColor: isLunas ? Colors.green : sisaColor,
+                      isBold: true,
+                    ),
                     const SizedBox(height: 8),
                     _buildInfoRow("Status", ""),
                     const SizedBox(height: 4),
@@ -720,14 +1345,14 @@ class _KreditPesananCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor,
+                        color: credit.statusColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        status,
+                        credit.statusLabel,
                         style: TextStyle(
                           fontSize: 10,
-                          color: statusTextColor,
+                          color: credit.statusColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -738,11 +1363,10 @@ class _KreditPesananCard extends StatelessWidget {
               Column(
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.add,
-                      size: 14, // kecilkan agar proporsional
-                    ),
+                    onPressed: isLunas
+                        ? null
+                        : onAlokasi, // 🔥 Disable jika lunas
+                    icon: const Icon(Icons.add, size: 14),
                     label: const Text(
                       "Alokasi",
                       style: TextStyle(fontSize: 12),
@@ -750,22 +1374,24 @@ class _KreditPesananCard extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xff4DD0E1),
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.grey[300],
+                      disabledForegroundColor: Colors.grey[600],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 4, // atur agar total tinggi sekitar 20
+                        vertical: 4,
                       ),
-                      minimumSize: const Size(0, 20), // tinggi tombol jadi 20
+                      minimumSize: const Size(0, 20),
                     ),
                   ),
+                  const SizedBox(height: 4),
                   ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.check_circle,
-                      size: 14, // kecilkan agar proporsional
-                    ),
+                    onPressed: isLunas
+                        ? null
+                        : onBayarPenuh, // 🔥 Disable jika lunas
+                    icon: const Icon(Icons.check_circle, size: 14),
                     label: const Text(
                       "Bayar Penuh",
                       style: TextStyle(fontSize: 12),
@@ -773,14 +1399,16 @@ class _KreditPesananCard extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xff55BC10),
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.grey[300],
+                      disabledForegroundColor: Colors.grey[600],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 4, // atur agar total tinggi sekitar 20
+                        vertical: 4,
                       ),
-                      minimumSize: const Size(0, 20), // tinggi tombol jadi 20
+                      minimumSize: const Size(0, 20),
                     ),
                   ),
                 ],

@@ -1,4 +1,5 @@
 import 'package:my_app/data/api/users_api.dart';
+import 'package:my_app/data/models/credit_model.dart';
 import 'package:my_app/data/models/users_model.dart';
 
 class UserRepository {
@@ -95,5 +96,38 @@ class UserRepository {
       description: description,
     );
     return response['message'] ?? 'Balance topped up successfully';
+  }
+
+  // Get user credits
+  Future<Map<String, dynamic>> getUserCredits({
+    required int userId,
+    int page = 1,
+  }) async {
+    final data = await UserApi.getUserCredits(userId: userId, page: page);
+
+    final credits = (data['data'] as List)
+        .map((e) => CreditModel.fromJson(e))
+        .toList();
+
+    final meta = data['meta'] ?? {};
+    final total = meta['total'] ?? 0;
+    final lastPage = meta['last_page'] ?? 1;
+
+    return {'credits': credits, 'total': total, 'last_page': lastPage};
+  }
+
+  // Allocate balance to order credit
+  Future<Map<String, dynamic>> allocateCredit({
+    required int userId,
+    required int orderCreditId,
+    required double amount,
+    String? description,
+  }) async {
+    return await UserApi.allocateCredit(
+      userId: userId,
+      orderCreditId: orderCreditId,
+      amount: amount,
+      description: description,
+    );
   }
 }
