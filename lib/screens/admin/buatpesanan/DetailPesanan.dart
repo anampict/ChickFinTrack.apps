@@ -13,7 +13,11 @@ import 'package:my_app/screens/surat/SuratJalan.dart';
 class Detailpesanan extends StatelessWidget {
   final OrderModel order;
 
-  Detailpesanan({super.key, required this.order});
+  Detailpesanan({super.key, required this.order}) {
+    // Set selectedOrder saat halaman dibuka
+    final orderController = Get.find<OrderController>();
+    orderController.selectedOrder.value = order;
+  }
 
   String _getAlamatLengkap(AddressModel? alamat) {
     if (alamat == null) return '-';
@@ -49,6 +53,27 @@ class Detailpesanan extends StatelessWidget {
       } catch (e) {
         return null;
       }
+    }
+  }
+
+  Future<void> _refreshData(BuildContext context) async {
+    try {
+      // Ambil OrderController untuk refresh data
+      final orderController = Get.find<OrderController>();
+
+      orderController.selectedOrder.value = order;
+
+      // Refresh detail pesanan dari API
+      await orderController.fetchOrderDetail(order.id);
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Gagal memperbarui data: $e',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
     }
   }
 
@@ -108,7 +133,7 @@ class Detailpesanan extends StatelessWidget {
         address: alamat?.addressLine1 ?? '-',
         city: alamat?.city ?? '-',
         postalCode: alamat?.postalCode ?? '-',
-        phoneNumber: phoneNumber, //  Pakai phone dari UserModel
+        phoneNumber: phoneNumber,
         orderDate: order.orderDate,
         courier: order.courier?.name ?? '-',
         items: invoiceItems,
@@ -144,8 +169,6 @@ class Detailpesanan extends StatelessWidget {
       print('Error generating invoice: $e');
     }
   }
-
-  //surat jalan
 
   Future<void> _generateDeliveryNote(BuildContext context) async {
     try {
@@ -237,9 +260,6 @@ class Detailpesanan extends StatelessWidget {
     }
   }
 
-  //invoice
-
-  // BUILD METHOD
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -293,157 +313,158 @@ class Detailpesanan extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 80),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Breadcrumb
-            Padding(
-              padding: const EdgeInsets.only(top: 31, left: 28),
-              child: Row(
-                children: const [
-                  Text(
-                    "Pesanan",
-                    style: TextStyle(
-                      fontFamily: "Primary",
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      color: Colors.black,
+      body: RefreshIndicator(
+        onRefresh: () => _refreshData(context),
+        color: const Color(0xffF26D2B),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 80),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Breadcrumb
+              Padding(
+                padding: const EdgeInsets.only(top: 31, left: 28),
+                child: Row(
+                  children: const [
+                    Text(
+                      "Pesanan",
+                      style: TextStyle(
+                        fontFamily: "Primary",
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 3),
-                  Icon(Icons.chevron_right, color: Colors.grey),
-                  SizedBox(width: 3),
-                  Text(
-                    "Detail",
-                    style: TextStyle(
-                      fontFamily: "Primary",
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                      color: Colors.black,
+                    SizedBox(width: 3),
+                    Icon(Icons.chevron_right, color: Colors.grey),
+                    SizedBox(width: 3),
+                    Text(
+                      "Detail",
+                      style: TextStyle(
+                        fontFamily: "Primary",
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Tombol atas
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // INVOICE
-                  SizedBox(
-                    width: 90,
-                    height: 30,
-                    child: OutlinedButton(
-                      onPressed: () => _generateInvoice(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        side: const BorderSide(color: Colors.black),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+              // Tombol atas
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // INVOICE
+                    SizedBox(
+                      width: 90,
+                      height: 30,
+                      child: OutlinedButton(
+                        onPressed: () => _generateInvoice(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          side: const BorderSide(color: Colors.black),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        "Invoice",
-                        style: TextStyle(
-                          fontFamily: "Primary",
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 5),
-
-                  // SURAT JALAN
-                  SizedBox(
-                    width: 90,
-                    height: 30,
-                    child: OutlinedButton(
-                      onPressed: () => _generateDeliveryNote(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        side: const BorderSide(color: Colors.black),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        "Surat Jalan",
-                        style: TextStyle(
-                          fontFamily: "Primary",
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                          color: Colors.black,
+                        child: const Text(
+                          "Invoice",
+                          style: TextStyle(
+                            fontFamily: "Primary",
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(width: 6),
+                    const SizedBox(width: 5),
 
-                  // EDIT PESANAN
-                  SizedBox(
-                    width: 90,
-                    height: 30,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.toNamed(
-                          AppRoutes.EditPesanan,
-                          arguments:
-                              order, // order adalah OrderModel yang sedang ditampilkan
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        backgroundColor: const Color(0xffF26D2B),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    // SURAT JALAN
+                    SizedBox(
+                      width: 90,
+                      height: 30,
+                      child: OutlinedButton(
+                        onPressed: () => _generateDeliveryNote(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          side: const BorderSide(color: Colors.black),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        "Edit Pesanan",
-                        style: TextStyle(
-                          fontFamily: "Primary",
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: Colors.white,
+                        child: const Text(
+                          "Surat Jalan",
+                          style: TextStyle(
+                            fontFamily: "Primary",
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+
+                    const SizedBox(width: 6),
+
+                    // EDIT PESANAN
+                    SizedBox(
+                      width: 90,
+                      height: 30,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.toNamed(AppRoutes.EditPesanan, arguments: order);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          backgroundColor: const Color(0xffF26D2B),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          "Edit Pesanan",
+                          style: TextStyle(
+                            fontFamily: "Primary",
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Section: Detail Pesanan
-            DetailSection(order: order),
+              // Section: Detail Pesanan
+              DetailSection(order: order),
 
-            // Section: Item Pesanan
-            ItemSection(orderItems: order.orderItems ?? []),
+              // Section: Item Pesanan
+              ItemSection(orderItems: order.orderItems ?? []),
 
-            // Section: Riwayat Status
-            RiwayatSection(
-              orderId: order.id, // TAMBAHKAN INI
-              orderHistories: order.orderHistories,
-            ),
-          ],
+              // Section: Riwayat Status
+              RiwayatSection(
+                orderId: order.id,
+                orderHistories: order.orderHistories,
+              ),
+            ],
+          ),
         ),
       ),
     );
