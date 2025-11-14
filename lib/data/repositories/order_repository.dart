@@ -34,6 +34,17 @@ class OrderRepository {
     }
   }
 
+  // update order
+  Future<OrderModel> updateOrder(int id, Map<String, dynamic> body) async {
+    final result = await OrderApi.updateOrder(id, body);
+
+    if (result['success'] == true && result['data'] != null) {
+      return OrderModel.fromJson(result['data']);
+    } else {
+      throw Exception(result['message'] ?? 'Gagal update pesanan');
+    }
+  }
+
   // update order history
   Future<bool> updateOrderHistory({
     required int orderId,

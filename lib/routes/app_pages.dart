@@ -8,6 +8,7 @@ import 'package:my_app/screens/SplashScreen.dart';
 import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
 import 'package:my_app/screens/admin/buatpesanan/DaftarPesanan.dart';
 import 'package:my_app/screens/admin/buatpesanan/DetailPesanan.dart';
+import 'package:my_app/screens/admin/buatpesanan/EditPesanan.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/DaftarPengguna.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/ManajemenKeuangan.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/TambahAlamat.dart';
@@ -39,6 +40,14 @@ class AppPages {
       page: () {
         final order = Get.arguments as OrderModel;
         return Detailpesanan(order: order);
+      },
+    ),
+    GetPage(
+      name: AppRoutes.EditPesanan,
+      page: () {
+        // Ambil argument yang dikirim
+        final OrderModel order = Get.arguments as OrderModel;
+        return EditPesanan(order: order);
       },
     ),
 

@@ -217,7 +217,7 @@ class _ManajemenKeuanganState extends State<ManajemenKeuangan> {
               return _SaldoCard(
                 amount: formattedPiutang,
                 label: "Total Piutang",
-                subtitle: "Pesanan yang belum terbayar",
+                subtitle: "Pesanan Yang Belum Terbayar",
                 color: Colors.red[200]!,
                 textColor: Colors.white,
               );
@@ -244,267 +244,269 @@ class _ManajemenKeuanganState extends State<ManajemenKeuangan> {
           width: Get.width * 0.9,
           child: Form(
             key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header - DINAMIS BERDASARKAN USER
-                Text(
-                  "Isi Ulang Saldo - $userName",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: "Primary",
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  "Tambahkan Saldo Untuk Customer Ini",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: "Primary",
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Jumlah Top up
-                Row(
-                  children: [
-                    const Text(
-                      "Jumlah Top up",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: "Primary",
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      "*wajib diisi",
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: "Primary",
-                        color: Colors.red,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                // Input Nominal
-                TextFormField(
-                  controller: amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: "Rp",
-                    hintStyle: const TextStyle(
-                      color: Colors.grey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header - DINAMIS BERDASARKAN USER
+                  Text(
+                    "Isi Ulang Saldo - $userName",
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
                       fontFamily: "Primary",
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xff009BEE)),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      color: Colors.black,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Jumlah harus diisi';
-                    }
-                    final amount = double.tryParse(
-                      value.replaceAll('.', '').replaceAll(',', ''),
-                    );
-                    if (amount == null) {
-                      return 'Jumlah tidak valid';
-                    }
-                    if (amount < 1000) {
-                      return 'Minimal Rp 1.000';
-                    }
-                    if (amount > 50000000) {
-                      return 'Maksimal Rp 50.000.000';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    // Format ribuan
-                    if (value.isNotEmpty) {
-                      String cleanValue = value.replaceAll('.', '');
-                      if (cleanValue.isNotEmpty) {
-                        final number = int.tryParse(cleanValue);
-                        if (number != null) {
-                          final formatter = NumberFormat('#,###', 'id_ID');
-                          String formatted = formatter.format(number);
-                          amountController.value = TextEditingValue(
-                            text: formatted,
-                            selection: TextSelection.collapsed(
-                              offset: formatted.length,
-                            ),
-                          );
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Tambahkan Saldo Untuk Customer Ini",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: "Primary",
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Jumlah Top up
+                  Row(
+                    children: [
+                      const Text(
+                        "Jumlah Top up",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: "Primary",
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        "*wajib diisi",
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: "Primary",
+                          color: Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Input Nominal
+                  TextFormField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: "Rp",
+                      hintStyle: const TextStyle(
+                        color: Colors.grey,
+                        fontFamily: "Primary",
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xff009BEE)),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Jumlah harus diisi';
+                      }
+                      final amount = double.tryParse(
+                        value.replaceAll('.', '').replaceAll(',', ''),
+                      );
+                      if (amount == null) {
+                        return 'Jumlah tidak valid';
+                      }
+                      if (amount < 1000) {
+                        return 'Minimal Rp 1.000';
+                      }
+                      if (amount > 50000000) {
+                        return 'Maksimal Rp 50.000.000';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      // Format ribuan
+                      if (value.isNotEmpty) {
+                        String cleanValue = value.replaceAll('.', '');
+                        if (cleanValue.isNotEmpty) {
+                          final number = int.tryParse(cleanValue);
+                          if (number != null) {
+                            final formatter = NumberFormat('#,###', 'id_ID');
+                            String formatted = formatter.format(number);
+                            amountController.value = TextEditingValue(
+                              text: formatted,
+                              selection: TextSelection.collapsed(
+                                offset: formatted.length,
+                              ),
+                            );
+                          }
                         }
                       }
-                    }
-                  },
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  "Minimal Rp 1.000 Maximal Rp 50.000.000",
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: "Primary",
-                    color: Colors.grey,
+                    },
                   ),
-                ),
-                const SizedBox(height: 20),
-
-                // Catatan
-                const Text(
-                  "Catatan",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: "Primary",
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Input Catatan
-                TextFormField(
-                  controller: descriptionController,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText: "Tambahkan catatan (opsional)",
-                    hintStyle: const TextStyle(
-                      color: Colors.grey,
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Minimal Rp 1.000 Maximal Rp 50.000.000",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
                       fontFamily: "Primary",
-                      fontSize: 12,
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xff009BEE)),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      color: Colors.grey,
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                // Buttons
-                Row(
-                  children: [
-                    // Tombol Kirim (Hijau)
-                    Expanded(
-                      child: Obx(
-                        () => ElevatedButton(
-                          onPressed: controller.isSubmitting.value
-                              ? null
-                              : () {
-                                  if (formKey.currentState!.validate()) {
-                                    final cleanAmount = amountController.text
-                                        .replaceAll('.', '')
-                                        .replaceAll(',', '');
-                                    final amount = double.parse(cleanAmount);
+                  // Catatan
+                  const Text(
+                    "Catatan",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: "Primary",
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
 
-                                    controller.topUpBalance(
-                                      userId: userId!,
-                                      amount: amount,
-                                      description:
-                                          descriptionController.text.isEmpty
-                                          ? null
-                                          : descriptionController.text,
-                                    );
-                                  }
-                                },
+                  // Input Catatan
+                  TextFormField(
+                    controller: descriptionController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: "Tambahkan catatan (opsional)",
+                      hintStyle: const TextStyle(
+                        color: Colors.grey,
+                        fontFamily: "Primary",
+                        fontSize: 12,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xff009BEE)),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Buttons
+                  Row(
+                    children: [
+                      // Tombol Kirim (Hijau)
+                      Expanded(
+                        child: Obx(
+                          () => ElevatedButton(
+                            onPressed: controller.isSubmitting.value
+                                ? null
+                                : () {
+                                    if (formKey.currentState!.validate()) {
+                                      final cleanAmount = amountController.text
+                                          .replaceAll('.', '')
+                                          .replaceAll(',', '');
+                                      final amount = double.parse(cleanAmount);
+
+                                      controller.topUpBalance(
+                                        userId: userId!,
+                                        amount: amount,
+                                        description:
+                                            descriptionController.text.isEmpty
+                                            ? null
+                                            : descriptionController.text,
+                                      );
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              elevation: 0,
+                            ),
+                            child: controller.isSubmitting.value
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Kirim",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontFamily: "Primary",
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Tombol Batal (Abu-abu)
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Get.back();
+                          },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
+                            backgroundColor: Colors.grey[300],
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             elevation: 0,
                           ),
-                          child: controller.isSubmitting.value
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  "Kirim",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontFamily: "Primary",
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-
-                    // Tombol Batal (Abu-abu)
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Get.back();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[300],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          "Batal",
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontFamily: "Primary",
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
+                          child: const Text(
+                            "Batal",
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontFamily: "Primary",
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

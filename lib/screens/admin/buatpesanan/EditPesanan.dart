@@ -1,25 +1,182 @@
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:my_app/controller/order_controller.dart';
 import 'package:my_app/controller/product_controller.dart';
 import 'package:my_app/controller/users_controller.dart';
-import 'package:my_app/data/models/product_model.dart';
-import 'package:my_app/helper/utils.dart';
+import 'package:my_app/data/models/order_model.dart';
+import 'package:my_app/data/models/users_model.dart';
+import 'package:my_app/data/models/users_model.dart' as user_data;
+import 'package:my_app/screens/admin/buatpesanan/BuatPesanan.dart';
 
-class Buatpesanan extends StatefulWidget {
-  const Buatpesanan({super.key});
+class EditPesanan extends StatefulWidget {
+  final OrderModel order;
+
+  const EditPesanan({super.key, required this.order});
 
   @override
-  State<Buatpesanan> createState() => _BuatpesananState();
+  State<EditPesanan> createState() => _EditpesananState();
 }
 
-class _BuatpesananState extends State<Buatpesanan> {
-  //kurir
-  String? selectedKurir;
+class _EditpesananState extends State<EditPesanan> {
+  // Variabel controllers
+  final userController = Get.find<UserController>();
+  final productController = Get.find<ProductController>();
+  final orderController = Get.find<OrderController>();
 
-  //tanggal
+  // Form variables
+  String? selectedPelanggan;
+  String? selectedPelangganId;
+  String? selectedKurirName;
+  String? selectedAlamat;
+  int? selectedAlamatId;
+  int? selectedKurirId;
+  bool alamatUserPicked = false;
+
   DateTime selectedDate = DateTime.now();
+  List<ItemPesanan> items = [];
+  final TextEditingController totalHargaController = TextEditingController(
+    text: '0',
+  );
+  bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrderData();
+  }
+
+  // Load data dari order yang akan diedit
+  Future<void> _loadOrderData() async {
+    try {
+      // Load user detail
+      await userController.getUserDetail(widget.order.userId);
+
+      setState(() {
+        // Set pelanggan
+        selectedPelanggan = widget.order.user?.name;
+        selectedPelangganId = widget.order.userId.toString();
+
+        // Set kurir
+        selectedKurirName = widget.order.courier?.name;
+        selectedKurirId = widget.order.courierId;
+
+        // Set tanggal
+        try {
+          selectedDate = DateTime.parse(widget.order.orderDate);
+          print('Selected date: $selectedDate');
+        } catch (e) {
+          print('Error parsing date: $e');
+          selectedDate = DateTime.now();
+        }
+
+        // Set alamat
+        final user = userController.userDetail.value;
+        final alamat = _findAddress(user, widget.order.userAddressId);
+
+        if (alamat != null) {
+          selectedAlamat = alamat.addressLine1;
+          selectedAlamatId = alamat.id;
+          print('Address found: ${alamat.addressLine1}');
+        }
+
+        // Set items
+        items =
+            widget.order.orderItems?.map((orderItem) {
+              print('\n--- Loading Order Item ---');
+              print('Product: ${orderItem.product?.name}');
+              print('Quantity: ${orderItem.quantity}');
+              print('Price: ${orderItem.priceAtPurchase}');
+
+              final item = ItemPesanan();
+              item.productId = orderItem.productId;
+              item.selectedProduk = orderItem.product?.name;
+              item.product = orderItem.product;
+
+              // Set jumlah
+              item.jumlahController.text = orderItem.quantity.toString();
+
+              // Set harga dengan format rupiah
+              final hargaValue = orderItem.priceAtPurchase.toInt();
+              item.hargaController.text = formatRupiah(hargaValue);
+
+              print('After set:');
+              print('- jumlahController: ${item.jumlahController.text}');
+              print('- hargaController: ${item.hargaController.text}');
+
+              // Hitung subtotal
+              item.hitungSubtotal();
+
+              print('After hitungSubtotal:');
+              print('- subtotal: ${item.subtotal}');
+              print('- subtotalController: ${item.subtotalController.text}');
+
+              // Add listeners
+              item.jumlahController.addListener(() {
+                if (mounted) {
+                  setState(() {
+                    item.hitungSubtotal();
+                    _hitungTotalHarga();
+                  });
+                }
+              });
+
+              item.hargaController.addListener(() {
+                if (mounted) {
+                  setState(() {
+                    item.hitungSubtotal();
+                    _hitungTotalHarga();
+                  });
+                }
+              });
+
+              return item;
+            }).toList() ??
+            [];
+
+        print('\n=== ITEMS LOADED ===');
+        print('Total items: ${items.length}');
+
+        // Hitung total harga
+        _hitungTotalHarga();
+
+        print('Total harga: ${totalHargaController.text}');
+      });
+
+      print('=== LOAD ORDER DATA SELESAI ===\n');
+    } catch (e, stackTrace) {
+      print('=== ERROR LOADING ORDER DATA ===');
+      print('Error: $e');
+      print('Stack trace: $stackTrace');
+
+      if (mounted) {
+        Get.snackbar(
+          'Error',
+          'Gagal memuat data pesanan: ${e.toString()}',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+        );
+      }
+    }
+  }
+
+  AddressModel? _findAddress(user_data.UserModel? user, String userAddressId) {
+    if (user == null || user.addresses.isEmpty) return null;
+
+    try {
+      return user.addresses.firstWhere(
+        (a) => a.id.toString() == userAddressId.toString(),
+      );
+    } catch (e) {
+      return user.addresses.firstWhere(
+        (a) => a.isDefault,
+        orElse: () => user.addresses.first,
+      );
+    }
+  }
+
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -40,17 +197,10 @@ class _BuatpesananState extends State<Buatpesanan> {
     }
   }
 
-  //produk
-  List<ItemPesanan> items = [];
-  final TextEditingController totalHargaController = TextEditingController(
-    text: '0',
-  );
-
   void _tambahItem() {
     setState(() {
       final item = ItemPesanan();
 
-      // Set listener untuk hitung subtotal & total harga otomatis
       item.jumlahController.addListener(() {
         setState(() {
           item.hitungSubtotal();
@@ -79,9 +229,101 @@ class _BuatpesananState extends State<Buatpesanan> {
   void _hitungTotalHarga() {
     int total = 0;
     for (var item in items) {
-      total += item.subtotal; // pakai int asli
+      total += item.subtotal;
     }
     totalHargaController.text = total.toString();
+  }
+
+  Future<void> submitUpdate() async {
+    print("=== MULAI UPDATE PESANAN ===");
+
+    if (selectedPelangganId == null ||
+        selectedAlamatId == null ||
+        selectedKurirId == null ||
+        items.isEmpty) {
+      Get.snackbar("Gagal", "Lengkapi semua data pesanan terlebih dahulu");
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    final orderItems = items.map((item) {
+      final jumlah = int.tryParse(item.jumlahController.text) ?? 0;
+
+      // Hapus format rupiah dari harga
+      final hargaText = item.hargaController.text.replaceAll(
+        RegExp(r'[^0-9]'),
+        '',
+      );
+      final harga = double.tryParse(hargaText) ?? 0;
+      final subtotal = (jumlah * harga).toInt();
+
+      return {
+        "product_id": item.productId,
+        "quantity": jumlah,
+        "price_at_purchase": harga.toInt(), // Sesuaikan dengan backend
+      };
+    }).toList();
+
+    final totalAmount = orderItems.fold<int>(
+      0,
+      (sum, i) =>
+          sum + ((i["quantity"] as int) * (i["price_at_purchase"] as int)),
+    );
+    final deposit = 0;
+
+    // Format tanggal ke ISO8601 String
+    final orderDate = selectedDate.toIso8601String();
+
+    print("Order ID: ${widget.order.id}");
+    print("User ID: $selectedPelangganId");
+    print("Address ID: $selectedAlamatId");
+    print("Courier ID: $selectedKurirId");
+    print("Order Date: $orderDate");
+    print("Total: $totalAmount");
+    print("Items: $orderItems");
+
+    try {
+      await orderController.updateOrder(
+        orderId: widget.order.id,
+        userId: int.parse(selectedPelangganId!),
+        userAddressId: selectedAlamatId!,
+        courierId: selectedKurirId!,
+        orderDate: orderDate,
+        totalAmount: totalAmount,
+        deposit: deposit,
+        orderItems: orderItems,
+      );
+
+      print("PESANAN BERHASIL DIUPDATE");
+
+      // Kembali ke halaman sebelumnya
+      Get.back();
+
+      // Tampilkan snackbar sukses
+      Get.snackbar(
+        "Sukses",
+        "Pesanan berhasil diupdate!",
+        backgroundColor: Colors.green.shade600,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      print("Gagal update pesanan: $e");
+      Get.snackbar(
+        "Error",
+        "Gagal update pesanan: $e",
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -93,134 +335,16 @@ class _BuatpesananState extends State<Buatpesanan> {
     super.dispose();
   }
 
-  //variabel user controller
-  final userController = Get.put(UserController());
-  String? selectedPelanggan;
-  String? selectedPelangganId;
-  String? selectedKurirName;
-  String? selectedAlamat; // akan simpan nama / label
-  int? selectedAlamatId;
-  int? selectedKurirId;
-  bool alamatUserPicked = false;
-
-  //produk controller
-  final productController = Get.find<ProductController>();
-
-  //buatpesanan
-  final orderController = Get.put(OrderController());
-
-  bool isLoading = false;
-
-  Future<void> submitPesanan() async {
-    print("=== MULAI BUAT PESANAN ===");
-
-    if (selectedPelangganId == null ||
-        selectedAlamatId == null ||
-        selectedKurirId == null ||
-        items.isEmpty) {
-      print("Data belum lengkap");
-      Get.snackbar("Gagal", "Lengkapi semua data pesanan terlebih dahulu");
-      return;
-    }
-
-    setState(() {
-      isLoading = true;
-    });
-
-    final orderItems = items.map((item) {
-      final jumlah = int.tryParse(item.jumlahController.text) ?? 0;
-      final harga =
-          item.product?.price ??
-          double.tryParse(item.hargaController.text) ??
-          0;
-      final subtotal = (jumlah * harga).toInt();
-
-      return {
-        "product_id": item.productId,
-        "quantity": jumlah,
-        "price": harga.toInt(),
-        "subtotal": subtotal,
-      };
-    }).toList();
-
-    final totalAmount = orderItems.fold<int>(
-      0,
-      (sum, i) => sum + (i["subtotal"] as int),
-    );
-    final deposit = 0;
-    final orderDate = DateTime.now().toIso8601String();
-
-    print("User ID: $selectedPelangganId");
-    print("Address ID: $selectedAlamatId");
-    print("Courier ID: $selectedKurirId");
-    print("Order Date: $orderDate");
-    print("Total: $totalAmount");
-    print("Items: $orderItems");
-
-    try {
-      await orderController.createOrder(
-        userId: int.parse(selectedPelangganId!),
-        userAddressId: selectedAlamatId!,
-        courierId: selectedKurirId!,
-        orderDate: orderDate,
-        totalAmount: totalAmount,
-        deposit: deposit,
-        orderItems: orderItems,
-      );
-
-      print("PESANAN BERHASIL DIKIRIM");
-
-      setState(() {
-        items.clear();
-        totalHargaController.text = '0';
-        selectedAlamat = null;
-        selectedKurir = null;
-        selectedPelanggan = null;
-      });
-
-      Get.snackbar(
-        "Sukses",
-        "Pesanan berhasil dibuat!",
-        backgroundColor: Colors.green.shade600,
-        colorText: Colors.white,
-      );
-    } catch (e) {
-      print("Gagal kirim pesanan: $e");
-      Get.snackbar(
-        "Error",
-        "Gagal membuat pesanan",
-        backgroundColor: Colors.red.shade600,
-        colorText: Colors.white,
-      );
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    Future.microtask(() async {
-      await userController.getUsers();
-
-      while (userController.currentPage.value < userController.lastPage.value) {
-        print(
-          'Memuat halaman ${userController.currentPage.value + 1} dari ${userController.lastPage.value}',
-        );
-        await userController.loadMoreUsers();
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Get.back(),
+        ),
         title: const Row(
           children: [
             CircleAvatar(
@@ -232,7 +356,7 @@ class _BuatpesananState extends State<Buatpesanan> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Selamat Malam",
+                  "Selamat Datang",
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 9,
@@ -268,7 +392,7 @@ class _BuatpesananState extends State<Buatpesanan> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 80),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -290,7 +414,7 @@ class _BuatpesananState extends State<Buatpesanan> {
                   Icon(Icons.chevron_right, color: Colors.grey),
                   SizedBox(width: 3),
                   Text(
-                    "Buat",
+                    "Edit",
                     style: TextStyle(
                       fontFamily: "Primary",
                       fontWeight: FontWeight.w500,
@@ -302,9 +426,37 @@ class _BuatpesananState extends State<Buatpesanan> {
               ),
             ),
 
-            // pelanggan
+            // Order Number Info
+            Padding(
+              padding: const EdgeInsets.only(top: 16, left: 28, right: 28),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: Color(0xffF26D2B)),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Edit Pesanan: ${widget.order.orderNumber}",
+                      style: const TextStyle(
+                        fontFamily: "Primary",
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xffF26D2B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Pelanggan
             const Padding(
-              padding: EdgeInsets.only(top: 30, left: 28, right: 28),
+              padding: EdgeInsets.only(top: 20, left: 28, right: 28),
               child: Text(
                 "Pelanggan",
                 style: TextStyle(
@@ -316,11 +468,10 @@ class _BuatpesananState extends State<Buatpesanan> {
               ),
             ),
 
-            //dropdown pelanggan
+            // Dropdown pelanggan
             Padding(
               padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
               child: Obx(() {
-                // Ambil hanya pelanggan dari list reactive
                 final pelangganList = userController.users
                     .where((u) => u.role == 'customer')
                     .map((u) => u.name ?? '-')
@@ -385,7 +536,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                       );
 
                       selectedPelangganId = picked.id.toString();
-
                       await userController.getUserDetail(picked.id);
                     },
                   ),
@@ -393,9 +543,9 @@ class _BuatpesananState extends State<Buatpesanan> {
               }),
             ),
 
-            //alamat pengiriman
-            Padding(
-              padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
+            // Alamat pengiriman
+            const Padding(
+              padding: EdgeInsets.only(top: 9, left: 28, right: 28),
               child: Text(
                 "Alamat Pengiriman",
                 style: TextStyle(
@@ -406,7 +556,7 @@ class _BuatpesananState extends State<Buatpesanan> {
                 ),
               ),
             ),
-            // Dropdown biasa
+
             Padding(
               padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
               child: Obx(() {
@@ -416,9 +566,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                   return Material(
                     elevation: 2,
                     borderRadius: BorderRadius.circular(8),
-                    shadowColor: Colors.transparent,
-                    surfaceTintColor:
-                        Colors.transparent, // hilangkan border hitam
                     child: DropdownMenu<String>(
                       width: MediaQuery.of(context).size.width - 56,
                       leadingIcon: const Icon(Icons.location_on_outlined),
@@ -427,21 +574,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                     ),
                   );
                 }
-
-                final defaultAddress = user.addresses.firstWhere(
-                  (a) => a.isDefault == true,
-                  orElse: () => user.addresses.first,
-                );
-
-                Future.microtask(() {
-                  if (!alamatUserPicked &&
-                      (selectedAlamatId != defaultAddress.id)) {
-                    setState(() {
-                      selectedAlamat = defaultAddress.addressLine1;
-                      selectedAlamatId = defaultAddress.id;
-                    });
-                  }
-                });
 
                 return Material(
                   elevation: 2,
@@ -461,8 +593,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                       setState(() {
                         selectedAlamat = picked.addressLine1;
                         selectedAlamatId = picked.id;
-
-                        // tandai bahwa user sudah memilih alamat sendiri
                         alamatUserPicked = true;
                       });
                     },
@@ -477,7 +607,7 @@ class _BuatpesananState extends State<Buatpesanan> {
               }),
             ),
 
-            //kurir dan tanggal
+            // Kurir dan Tanggal
             Padding(
               padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
               child: Row(
@@ -507,7 +637,7 @@ class _BuatpesananState extends State<Buatpesanan> {
                             borderRadius: BorderRadius.circular(8),
                             child: DropdownMenu<String>(
                               width: double.infinity,
-                              initialSelection: selectedKurir,
+                              initialSelection: selectedKurirName,
                               leadingIcon: const Icon(
                                 Icons.local_shipping_outlined,
                               ),
@@ -524,10 +654,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                                   vertical: 14,
                                   horizontal: 12,
                                 ),
-                                hintStyle: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14,
-                                ),
                               ),
                               hintText: 'Pilih Kurir',
                               onSelected: (value) {
@@ -538,13 +664,9 @@ class _BuatpesananState extends State<Buatpesanan> {
                                 );
 
                                 setState(() {
-                                  selectedKurir = picked.name;
-                                  selectedKurirId = picked.id; // ID tersimpan
+                                  selectedKurirName = picked.name;
+                                  selectedKurirId = picked.id;
                                 });
-
-                                print(
-                                  "Dipilih kurir -> name=${picked.name}, id=${picked.id}",
-                                );
                               },
                               dropdownMenuEntries: kurirList.map((kurir) {
                                 return DropdownMenuEntry(
@@ -610,13 +732,13 @@ class _BuatpesananState extends State<Buatpesanan> {
                 ],
               ),
             ),
-            //item pesanan
+
+            // Item Pesanan
             Padding(
               padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header + Tombol Tambah
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -663,7 +785,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 12),
-                        // Baris Produk + Jumlah + Tombol Hapus
                         Row(
                           children: [
                             Expanded(
@@ -686,9 +807,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                                     child: Obx(() {
                                       final listProduk =
                                           productController.products;
-                                      print(
-                                        'Jumlah produk: ${listProduk.length}',
-                                      );
 
                                       return DropdownMenu<String>(
                                         width: double.infinity,
@@ -696,7 +814,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                                         hintText: 'Pilih Produk',
                                         onSelected: (value) {
                                           if (value == null) return;
-                                          print('Produk dipilih: $value');
 
                                           setState(() {
                                             item.selectedProduk = value;
@@ -707,11 +824,10 @@ class _BuatpesananState extends State<Buatpesanan> {
                                                 );
 
                                             item.productId = picked.id;
-
-                                            item.hargaController.text = picked
-                                                .price
-                                                .toString();
-
+                                            item.hargaController.text =
+                                                formatRupiah(
+                                                  picked.price.toInt(),
+                                                );
                                             item.hitungSubtotal();
                                             _hitungTotalHarga();
                                           });
@@ -768,10 +884,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                                         filled: true,
                                         fillColor: Colors.white,
                                         hintText: '0',
-                                        hintStyle: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 14,
-                                        ),
                                       ),
                                     ),
                                   ),
@@ -785,9 +897,7 @@ class _BuatpesananState extends State<Buatpesanan> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 12),
-                        // Baris Harga Satuan + Subtotal
                         Row(
                           children: [
                             Expanded(
@@ -811,7 +921,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                                       controller: item.hargaController,
                                       keyboardType: TextInputType.number,
                                       onChanged: (value) {
-                                        // Hapus semua selain angka
                                         String cleaned = value.replaceAll(
                                           RegExp(r'[^0-9]'),
                                           '',
@@ -837,7 +946,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                                           item.hitungSubtotal();
                                         });
                                       },
-
                                       decoration: InputDecoration(
                                         contentPadding:
                                             const EdgeInsets.symmetric(
@@ -852,12 +960,7 @@ class _BuatpesananState extends State<Buatpesanan> {
                                         ),
                                         filled: true,
                                         fillColor: Colors.white,
-                                        // prefixText: 'Rp. ',
                                         hintText: 'Rp 0',
-                                        hintStyle: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 14,
-                                        ),
                                       ),
                                     ),
                                   ),
@@ -886,7 +989,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                                       controller: item.subtotalController,
                                       readOnly: true,
                                       decoration: InputDecoration(
-                                        // prefixText: 'Rp. ',
                                         contentPadding:
                                             const EdgeInsets.symmetric(
                                               vertical: 14,
@@ -901,10 +1003,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                                         filled: true,
                                         fillColor: Colors.white,
                                         hintText: '0',
-                                        hintStyle: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 14,
-                                        ),
                                       ),
                                     ),
                                   ),
@@ -921,6 +1019,8 @@ class _BuatpesananState extends State<Buatpesanan> {
                 ],
               ),
             ),
+
+            // Total Harga
             Padding(
               padding: const EdgeInsets.only(top: 9, left: 28, right: 28),
               child: Column(
@@ -942,7 +1042,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                       controller: totalHargaController,
                       readOnly: true,
                       decoration: InputDecoration(
-                        // prefixText: 'Rp. ',
                         contentPadding: const EdgeInsets.symmetric(
                           vertical: 14,
                           horizontal: 12,
@@ -963,7 +1062,7 @@ class _BuatpesananState extends State<Buatpesanan> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Tombol Buat Pesanan & Batal
+                  // Tombol Update & Batal
                   Row(
                     children: [
                       Expanded(
@@ -975,7 +1074,7 @@ class _BuatpesananState extends State<Buatpesanan> {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          onPressed: isLoading ? null : submitPesanan,
+                          onPressed: isLoading ? null : submitUpdate,
                           child: isLoading
                               ? const SizedBox(
                                   height: 20,
@@ -986,7 +1085,7 @@ class _BuatpesananState extends State<Buatpesanan> {
                                   ),
                                 )
                               : const Text(
-                                  "Buat Pesanan",
+                                  "Update Pesanan",
                                   style: TextStyle(
                                     fontFamily: "Primary",
                                     fontSize: 14,
@@ -996,7 +1095,6 @@ class _BuatpesananState extends State<Buatpesanan> {
                                 ),
                         ),
                       ),
-
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton(
@@ -1008,11 +1106,7 @@ class _BuatpesananState extends State<Buatpesanan> {
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           onPressed: () {
-                            // Aksi batal
-                            setState(() {
-                              items.clear();
-                              totalHargaController.text = '0';
-                            });
+                            Get.back();
                           },
                           child: const Text(
                             "Batal",
@@ -1035,6 +1129,16 @@ class _BuatpesananState extends State<Buatpesanan> {
       ),
     );
   }
+}
+
+// Helper function untuk format rupiah
+String formatRupiah(int amount) {
+  final formatter = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
+  return formatter.format(amount);
 }
 
 class ItemPesanan {
@@ -1067,12 +1171,15 @@ class ItemPesanan {
 
   void hitungSubtotal() {
     final jumlah = int.tryParse(jumlahController.text) ?? 0;
-    final harga = double.tryParse(hargaController.text) ?? 0;
 
-    subtotal = (jumlah * harga).toInt(); // konversi ke int kalau perlu
+    // Hapus semua karakter non-digit (Rp, titik, spasi, dll)
+    final hargaText = hargaController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final harga =
+        int.tryParse(hargaText) ??
+        0; // UBAH INI dari double.tryParse ke int.tryParse
+
+    subtotal = jumlah * harga;
     subtotalController.text = subtotal.toString();
-
-    print('DEBUG jumlah: $jumlah, harga: $harga, subtotal: $subtotal');
   }
 
   void dispose() {

@@ -6,6 +6,7 @@ import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/data/models/users_model.dart' as user_data;
 import 'package:my_app/data/models/order_model.dart';
 import 'package:my_app/data/models/users_model.dart';
+import 'package:my_app/routes/app_routes.dart';
 import 'package:my_app/screens/surat/Invoice.dart';
 import 'package:my_app/screens/surat/SuratJalan.dart';
 
@@ -331,60 +332,97 @@ class Detailpesanan extends StatelessWidget {
 
             // Tombol atas
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 0),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  OutlinedButton(
-                    onPressed: () => _generateInvoice(context),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.black),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  // INVOICE
+                  SizedBox(
+                    width: 90,
+                    height: 30,
+                    child: OutlinedButton(
+                      onPressed: () => _generateInvoice(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        side: const BorderSide(color: Colors.black),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      "Invoice",
-                      style: TextStyle(
-                        fontFamily: "Primary",
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
+                      child: const Text(
+                        "Invoice",
+                        style: TextStyle(
+                          fontFamily: "Primary",
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                   ),
+
                   const SizedBox(width: 5),
-                  OutlinedButton(
-                    onPressed: () => _generateDeliveryNote(context),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.black),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+
+                  // SURAT JALAN
+                  SizedBox(
+                    width: 90,
+                    height: 30,
+                    child: OutlinedButton(
+                      onPressed: () => _generateDeliveryNote(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        side: const BorderSide(color: Colors.black),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      "Surat Jalan",
-                      style: TextStyle(
-                        fontFamily: "Primary",
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
+                      child: const Text(
+                        "Surat Jalan",
+                        style: TextStyle(
+                          fontFamily: "Primary",
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                   ),
+
                   const SizedBox(width: 6),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xffF26D2B),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+
+                  // EDIT PESANAN
+                  SizedBox(
+                    width: 90,
+                    height: 30,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.toNamed(
+                          AppRoutes.EditPesanan,
+                          arguments:
+                              order, // order adalah OrderModel yang sedang ditampilkan
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        backgroundColor: const Color(0xffF26D2B),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      "Edit Pesanan",
-                      style: TextStyle(
-                        fontFamily: "Primary",
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: Colors.white,
+                      child: const Text(
+                        "Edit Pesanan",
+                        style: TextStyle(
+                          fontFamily: "Primary",
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -447,10 +485,10 @@ class DetailSection extends StatelessWidget {
       final alamat = user.addresses.firstWhere(
         (a) => a.id.toString() == userAddressId.toString(),
       );
-      print("✅ Found matching address: ${alamat.addressLine1}");
+      print("Found matching address: ${alamat.addressLine1}");
       return alamat;
     } catch (e) {
-      print("❌ Address not found for ID: $userAddressId");
+      print(" Address not found for ID: $userAddressId");
       // Jika tidak ketemu, ambil alamat default atau yang pertama
       try {
         return user.addresses.firstWhere(
@@ -628,7 +666,7 @@ class DetailSection extends StatelessWidget {
                 const Divider(),
                 const SizedBox(height: 12),
                 _infoItem(
-                  "Status Pembayaran",
+                  "Status Pesanan",
                   order.activeHistory?.statusName ?? '-',
                   labelStyle,
                   valueStyle.copyWith(

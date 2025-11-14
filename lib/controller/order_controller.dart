@@ -15,6 +15,8 @@ class OrderController extends GetxController {
 
   var currentPage = 1.obs;
 
+  var isUpdating = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -153,6 +155,53 @@ class OrderController extends GetxController {
       return null;
     } finally {
       isCreating.value = false;
+    }
+  }
+
+  Future<OrderModel?> updateOrder({
+    required int orderId,
+    required int userId,
+    required int userAddressId,
+    required int courierId,
+    required String orderDate,
+    required int totalAmount,
+    required int deposit,
+    required List<Map<String, dynamic>> orderItems,
+  }) async {
+    try {
+      isUpdating.value = true;
+
+      final body = {
+        "user_id": userId,
+        "user_address_id": userAddressId,
+        "courier_id": courierId,
+        "order_date": orderDate,
+        "total_amount": totalAmount,
+        "deposit": deposit,
+        "order_items": orderItems,
+      };
+
+      print("Updating Order ID $orderId: $body");
+
+      final result = await _repository.updateOrder(orderId, body);
+
+      // Update selectedOrder jika sedang di detail
+      if (selectedOrder.value?.id == orderId) {
+        selectedOrder.value = result;
+      }
+
+      // Update di list orders
+      final index = orders.indexWhere((o) => o.id == orderId);
+      if (index != -1) {
+        orders[index] = result;
+      }
+
+      return result;
+    } catch (e) {
+      print("Error update order: $e");
+      return null;
+    } finally {
+      isUpdating.value = false;
     }
   }
 

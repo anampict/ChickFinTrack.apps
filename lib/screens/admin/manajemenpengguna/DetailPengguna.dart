@@ -207,6 +207,7 @@ class Detailpengguna extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
+                  color: Colors.white,
                   elevation: 1,
                   child: Padding(
                     padding: const EdgeInsets.all(16),
