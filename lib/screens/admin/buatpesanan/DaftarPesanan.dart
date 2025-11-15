@@ -239,26 +239,9 @@ class Daftarpesanan extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                Material(
-                                  color: const Color(
-                                    0xffA42727,
-                                  ).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    child: Text(
-                                      order.activeHistory?.statusName ??
-                                          'Tidak Diketahui',
-                                      style: const TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xffF26D2B),
-                                      ),
-                                    ),
-                                  ),
+                                OrderStatusBadge(
+                                  statusCode: order.activeHistory?.statusCode,
+                                  statusName: order.activeHistory?.statusName,
                                 ),
                               ],
                             ),
@@ -279,6 +262,99 @@ class Daftarpesanan extends StatelessWidget {
           Get.to(() => Buatpesanan());
         },
         child: const Icon(Icons.add, size: 28, color: Colors.white),
+      ),
+    );
+  }
+}
+
+// Helper class untuk mendapatkan konfigurasi status
+class OrderStatusHelper {
+  static Map<String, dynamic> getStatusConfig(String? statusCode) {
+    switch (statusCode?.toLowerCase()) {
+      case 'pending':
+        return {
+          'color': const Color(0xffFFA500),
+          'backgroundColor': const Color(0xffFFA500).withOpacity(0.1),
+          'icon': Icons.schedule,
+          'label': 'Pending',
+        };
+      case 'confirmed':
+        return {
+          'color': const Color(0xff2196F3),
+          'backgroundColor': const Color(0xff2196F3).withOpacity(0.1),
+          'icon': Icons.check_circle_outline,
+          'label': 'Dikonfirmasi',
+        };
+      case 'processing':
+        return {
+          'color': const Color(0xff9C27B0),
+          'backgroundColor': const Color(0xff9C27B0).withOpacity(0.1),
+          'icon': Icons.settings,
+          'label': 'Diproses',
+        };
+      case 'shipped':
+        return {
+          'color': const Color(0xff00BCD4),
+          'backgroundColor': const Color(0xff00BCD4).withOpacity(0.1),
+          'icon': Icons.local_shipping,
+          'label': 'Dikirim',
+        };
+      case 'delivered':
+        return {
+          'color': const Color(0xff4CAF50),
+          'backgroundColor': const Color(0xff4CAF50).withOpacity(0.1),
+          'icon': Icons.check_circle,
+          'label': 'Terkirim',
+        };
+      case 'cancelled':
+        return {
+          'color': const Color(0xffF44336),
+          'backgroundColor': const Color(0xffF44336).withOpacity(0.1),
+          'icon': Icons.cancel,
+          'label': 'Dibatalkan',
+        };
+      default:
+        return {
+          'color': const Color(0xff9E9E9E),
+          'backgroundColor': const Color(0xff9E9E9E).withOpacity(0.1),
+          'icon': Icons.help_outline,
+          'label': 'Tidak Diketahui',
+        };
+    }
+  }
+}
+
+// Widget Badge Status yang bisa digunakan langsung
+class OrderStatusBadge extends StatelessWidget {
+  final String? statusCode;
+  final String? statusName;
+
+  const OrderStatusBadge({super.key, this.statusCode, this.statusName});
+
+  @override
+  Widget build(BuildContext context) {
+    final config = OrderStatusHelper.getStatusConfig(statusCode);
+
+    return Material(
+      color: config['backgroundColor'],
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(config['icon'], size: 12, color: config['color']),
+            const SizedBox(width: 4),
+            Text(
+              statusName ?? config['label'],
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: config['color'],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

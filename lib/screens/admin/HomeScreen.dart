@@ -9,6 +9,7 @@ import 'package:my_app/controller/product_controller.dart';
 import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/data/repositories/product_repository.dart';
 import 'package:my_app/routes/app_routes.dart';
+import 'package:my_app/screens/admin/buatpesanan/DaftarPesanan.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class Homescreen extends StatefulWidget {
@@ -404,24 +405,9 @@ class _HomescreenState extends State<Homescreen> {
                         "${formatTanggal(order.orderDate)}",
                       ),
 
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xff959595),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          order.activeHistory?.statusName ?? "Menunggu",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontFamily: "Primary",
-                            fontWeight: FontWeight.w500,
-                            fontSize: 9,
-                          ),
-                        ),
+                      trailing: OrderStatusBadge(
+                        statusCode: order.activeHistory?.statusCode,
+                        statusName: order.activeHistory?.statusName,
                       ),
                     ),
                   ),
