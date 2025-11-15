@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/data/models/users_model.dart';
 import 'package:my_app/routes/app_routes.dart';
+import 'package:my_app/screens/admin/buatpesanan/DaftarPesanan.dart';
 import 'package:my_app/screens/admin/manajemenpengguna/DetailPengguna.dart';
 
 class DaftarPengguna extends StatelessWidget {
@@ -217,28 +218,7 @@ class DaftarPengguna extends StatelessWidget {
                                       ),
                                     ],
                                   ),
-                                  trailing: Container(
-                                    width: 90,
-                                    height: 29,
-                                    alignment: Alignment.center,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[200],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      _capitalizeRole(user.role),
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black87,
-                                        fontFamily: "Primary",
-                                      ),
-                                    ),
-                                  ),
+                                  trailing: UserRoleBadge(role: user.role),
                                 ),
                               ),
                             ),
@@ -298,5 +278,142 @@ class DaftarPengguna extends StatelessWidget {
       default:
         return role;
     }
+  }
+}
+
+class UserRoleHelper {
+  static Map<String, dynamic> getRoleConfig(String? role) {
+    switch (role?.toLowerCase()) {
+      case 'admin':
+        return {
+          'color': const Color(0xffE91E63),
+          'backgroundColor': const Color(0xffE91E63).withOpacity(0.1),
+          'icon': Icons.admin_panel_settings,
+        };
+      case 'courier':
+      case 'kurir':
+        return {
+          'color': const Color(0xff2196F3),
+          'backgroundColor': const Color(0xff2196F3).withOpacity(0.1),
+          'icon': Icons.delivery_dining,
+        };
+      case 'customer':
+      case 'pelanggan':
+        return {
+          'color': const Color(0xff4CAF50),
+          'backgroundColor': const Color(0xff4CAF50).withOpacity(0.1),
+          'icon': Icons.person,
+        };
+      default:
+        return {
+          'color': const Color(0xff9E9E9E),
+          'backgroundColor': const Color(0xff9E9E9E).withOpacity(0.1),
+          'icon': Icons.help_outline,
+        };
+    }
+  }
+
+  static String capitalizeRole(String role) {
+    if (role.isEmpty) return role;
+
+    // Map role ke bahasa Indonesia
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return 'Admin';
+      case 'courier':
+      case 'kurir':
+        return 'Kurir';
+      case 'customer':
+      case 'pelanggan':
+        return 'Pelanggan';
+      default:
+        return role[0].toUpperCase() + role.substring(1).toLowerCase();
+    }
+  }
+}
+
+// Widget Badge Status Pesanan
+class OrderStatusBadge extends StatelessWidget {
+  final String? statusCode;
+  final String? statusName;
+
+  const OrderStatusBadge({super.key, this.statusCode, this.statusName});
+
+  @override
+  Widget build(BuildContext context) {
+    final config = OrderStatusHelper.getStatusConfig(statusCode);
+
+    return Material(
+      color: config['backgroundColor'],
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(config['icon'], size: 12, color: config['color']),
+            const SizedBox(width: 4),
+            Text(
+              statusName ?? config['label'],
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: config['color'],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Widget Badge Role User
+class UserRoleBadge extends StatelessWidget {
+  final String? role;
+  final double width;
+  final double height;
+
+  const UserRoleBadge({
+    super.key,
+    this.role,
+    this.width = 100,
+    this.height = 29,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final config = UserRoleHelper.getRoleConfig(role);
+
+    return Container(
+      width: width,
+      height: height,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: config['backgroundColor'],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(config['icon'], size: 14, color: config['color']),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              UserRoleHelper.capitalizeRole(role ?? ''),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: config['color'],
+                fontFamily: "Primary",
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
