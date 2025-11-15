@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:my_app/controller/order_controller.dart';
 import 'package:my_app/controller/users_controller.dart';
 import 'package:my_app/data/models/credit_model.dart';
+import 'package:my_app/data/models/order_model.dart';
 
 class ManajemenKeuangan extends StatefulWidget {
   const ManajemenKeuangan({super.key});
@@ -14,6 +16,7 @@ class ManajemenKeuangan extends StatefulWidget {
 
 class _ManajemenKeuanganState extends State<ManajemenKeuangan> {
   final UserController controller = Get.put(UserController());
+  final OrderController orderController = Get.put(OrderController());
   final box = GetStorage();
   int? userId;
 
@@ -33,6 +36,13 @@ class _ManajemenKeuanganState extends State<ManajemenKeuangan> {
         controller.getUserBalance(userId!);
         controller.getUserDetail(userId!);
         controller.getUserCredits(userId!).then((_) {});
+      });
+
+      // Fetch orders dengan delay untuk avoid conflict
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          orderController.fetchOrders();
+        }
       });
     } else {
       // Tampilkan pesan error jika user ID tidak ditemukan
@@ -55,6 +65,8 @@ class _ManajemenKeuanganState extends State<ManajemenKeuangan> {
         onRefresh: () async {
           if (userId != null) {
             await controller.getUserBalance(userId!);
+            await controller.getUserCredits(userId!);
+            await orderController.fetchOrders();
           }
         },
         child: SingleChildScrollView(
@@ -1134,27 +1146,154 @@ class _ManajemenKeuanganState extends State<ManajemenKeuangan> {
   }
 
   Widget _buildRiwayatTransaksiSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Riwayat Transaksi",
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+    return Obx(() {
+      // Filter orders berdasarkan userId
+      final userOrders = orderController.orders
+          .where((order) => order.userId == userId)
+          .toList();
+
+      // Hitung total transaksi pembayaran
+      final totalTransactions = _getTotalTransactions(userOrders);
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Riwayat Transaksi",
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+              if (totalTransactions > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '$totalTransactions Transaksi',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue[800],
+                    ),
+                  ),
+                ),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-        _RiwayatTransaksiCard(
-          tanggal: "23/10 12:47",
-          jenis: "Bayar Ayam 05 ons",
-          saldo: "Rp 460.000",
-          keterangan: "Bayar Ayam 05 ons",
-          isDebit: false,
-        ),
-      ],
-    );
+          const SizedBox(height: 12),
+
+          // Loading state
+          if (orderController.isLoading.value)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          // Empty state
+          else if (userOrders.isEmpty || totalTransactions == 0)
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.history, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Belum ada riwayat transaksi',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          // Transaction list
+          else
+            Column(
+              children: [
+                // Loop semua order dan tampilkan riwayat pembayarannya
+                ...userOrders.expand((order) {
+                  // Skip jika tidak ada pembayaran
+                  if (order.allocatedAmount <= 0) {
+                    return <Widget>[];
+                  }
+
+                  // Ambil semua history (tidak filter berdasarkan status code)
+                  final histories = order.orderHistories ?? [];
+
+                  // Jika ada allocated amount tapi tidak ada history, buat card default
+                  if (histories.isEmpty) {
+                    return [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _RiwayatTransaksiCard(
+                          tanggal: _formatDate(order.orderDate),
+                          orderNumber: order.orderNumber,
+                          jenis: _getTransactionType(order),
+                          saldo: _formatCurrency(order.allocatedAmount),
+                          keterangan: "Pembayaran order",
+                          isDebit: false,
+                          status: _getOrderStatus(order),
+                          statusCode: 'paid',
+                        ),
+                      ),
+                    ];
+                  }
+
+                  // Tampilkan semua history yang ada
+                  return histories.map((history) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _RiwayatTransaksiCard(
+                        tanggal: _formatDate(history.createdAt),
+                        orderNumber: order.orderNumber,
+                        jenis: _getTransactionType(order),
+                        saldo: _formatCurrency(order.allocatedAmount),
+                        keterangan: history.notes.isNotEmpty
+                            ? history.notes
+                            : "Pembayaran ${history.statusName}",
+                        isDebit: false,
+                        status: _getOrderStatus(order),
+                        statusCode: history.statusCode,
+                      ),
+                    );
+                  }).toList();
+                }).toList(),
+
+                // Load more button
+                if (orderController.currentPage.value <
+                        (orderController.pagination.value?['last_page'] ?? 1) &&
+                    userOrders.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: orderController.isLoadingMore.value
+                        ? const Center(child: CircularProgressIndicator())
+                        : TextButton(
+                            onPressed: () {
+                              orderController.loadMoreOrders();
+                            },
+                            child: const Text('Muat Lebih Banyak'),
+                          ),
+                  ),
+              ],
+            ),
+        ],
+      );
+    });
   }
 }
 
@@ -1188,7 +1327,7 @@ class _SaldoCard extends StatelessWidget {
           Text(
             amount,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
               color: textColor,
             ),
@@ -1447,20 +1586,123 @@ class _KreditPesananCard extends StatelessWidget {
   }
 }
 
-// Widget terpisah untuk Riwayat Transaksi Card
+int _getTotalTransactions(List<OrderModel> userOrders) {
+  int total = 0;
+  for (var order in userOrders) {
+    // Hitung order yang punya pembayaran
+    if (order.allocatedAmount > 0) {
+      final histories = order.orderHistories ?? [];
+      if (histories.isEmpty) {
+        // Jika tidak ada history tapi ada allocated, hitung 1 transaksi
+        total += 1;
+      } else {
+        // Hitung semua history
+        total += histories.length;
+      }
+    }
+  }
+  return total;
+}
+
+String _formatDate(String? dateStr) {
+  if (dateStr == null || dateStr.isEmpty) return "-";
+
+  try {
+    final date = DateTime.parse(dateStr);
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+
+    return "$day/$month $hour:$minute";
+  } catch (e) {
+    // Jika format tanggal tidak bisa di-parse, coba format lain
+    try {
+      // Coba split jika format DD/MM/YYYY
+      if (dateStr.contains('/')) {
+        return dateStr;
+      }
+      return dateStr;
+    } catch (_) {
+      return dateStr;
+    }
+  }
+}
+
+String _getTransactionType(OrderModel order) {
+  // Ambil nama produk dari order items
+  final orderItems = order.orderItems;
+  if (orderItems != null && orderItems.isNotEmpty) {
+    if (orderItems.length == 1) {
+      final product = orderItems[0].product;
+      final qty = orderItems[0].quantity;
+      return "Bayar ${product?.name ?? 'Produk'} (${qty}x)";
+    } else {
+      // Jika lebih dari 1 produk
+      final firstProduct = orderItems[0].product?.name ?? 'Produk';
+      final firstQty = orderItems[0].quantity;
+      return "Bayar $firstProduct (${firstQty}x) +${orderItems.length - 1}";
+    }
+  }
+
+  return "Pembayaran Order";
+}
+
+String _formatCurrency(dynamic amount) {
+  if (amount == null) return "Rp 0";
+
+  double value;
+  if (amount is String) {
+    value = double.tryParse(amount) ?? 0;
+  } else if (amount is num) {
+    value = amount.toDouble();
+  } else {
+    return "Rp 0";
+  }
+
+  final formatted = value
+      .toStringAsFixed(0)
+      .replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+        (Match m) => '${m[1]}.',
+      );
+
+  return 'Rp $formatted';
+}
+
+String _getOrderStatus(OrderModel order) {
+  final remaining = order.remainingAmount;
+  final total = order.totalAmount;
+
+  if (remaining <= 0) {
+    return 'Lunas';
+  } else if (remaining > 0 && remaining < total) {
+    return 'Cicilan';
+  } else {
+    return 'Belum Bayar';
+  }
+}
+
+// Widget card untuk riwayat transaksi
 class _RiwayatTransaksiCard extends StatelessWidget {
   final String tanggal;
+  final String orderNumber;
   final String jenis;
   final String saldo;
   final String keterangan;
   final bool isDebit;
+  final String status;
+  final String statusCode;
 
   const _RiwayatTransaksiCard({
     required this.tanggal,
+    required this.orderNumber,
     required this.jenis,
     required this.saldo,
     required this.keterangan,
     required this.isDebit,
+    required this.status,
+    required this.statusCode,
   });
 
   @override
@@ -1478,65 +1720,95 @@ class _RiwayatTransaksiCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInfoRow("Tanggal", tanggal),
-                const SizedBox(height: 8),
-                _buildInfoRow("Jenis", jenis),
-              ],
-            ),
+          // Header dengan nomor order dan status
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  orderNumber,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getStatusColor(status),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: _getStatusTextColor(status),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInfoRow("Saldo", ""),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+          const SizedBox(height: 12),
+
+          // Body content
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoRow("Tanggal", tanggal),
+                    const SizedBox(height: 8),
+                    _buildInfoRow("Jenis", jenis),
+                    const SizedBox(height: 8),
+                    _buildInfoRow("Keterangan", keterangan),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "Jumlah",
+                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[100],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    isDebit ? "Debit" : "Kredit",
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.blue[900],
-                      fontWeight: FontWeight.w500,
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDebit ? Colors.green[100] : Colors.red[100],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      isDebit ? "Debit" : "Kredit",
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDebit ? Colors.green[900] : Colors.red[900],
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _buildInfoRow("Keterangan", keterangan),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                "Jumlah",
-                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                saldo,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    saldo,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDebit ? Colors.green[700] : Colors.red[700],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1555,8 +1827,36 @@ class _RiwayatTransaksiCard extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(fontSize: 12, color: Colors.black),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
       ],
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'lunas':
+        return Colors.green[100]!;
+      case 'cicilan':
+        return Colors.orange[100]!;
+      case 'belum bayar':
+        return Colors.red[100]!;
+      default:
+        return Colors.grey[200]!;
+    }
+  }
+
+  Color _getStatusTextColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'lunas':
+        return Colors.green[900]!;
+      case 'cicilan':
+        return Colors.orange[900]!;
+      case 'belum bayar':
+        return Colors.red[900]!;
+      default:
+        return Colors.grey[700]!;
+    }
   }
 }
