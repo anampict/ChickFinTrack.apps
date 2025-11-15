@@ -30,10 +30,41 @@ class _HomescreenState extends State<Homescreen> {
   final userController = Get.put(UserController());
   final dashboardController = Get.put(DashboardController());
 
+  // List banner images
+  final List<String> banners = [
+    'assets/images/banner1.png',
+    'assets/images/banner2.png',
+    'assets/images/banner3.png',
+  ];
+
   @override
   void initState() {
     super.initState();
     orderController.fetchOrders(page: 11);
+
+    // Auto scroll banner setiap 3 detik
+    Future.delayed(const Duration(seconds: 2), () {
+      _autoScrollBanner();
+    });
+  }
+
+  void _autoScrollBanner() {
+    if (!mounted) return;
+
+    Future.delayed(const Duration(seconds: 3), () {
+      if (_pageController.hasClients && mounted) {
+        int nextPage = _currentPage + 1;
+        if (nextPage >= banners.length) {
+          nextPage = 0;
+        }
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+        _autoScrollBanner();
+      }
+    });
   }
 
   @override
@@ -218,36 +249,80 @@ class _HomescreenState extends State<Homescreen> {
             }),
           ),
 
-          // TAB ALOKASI
+          // BANNER CAROUSEL
           SliverToBoxAdapter(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              padding: const EdgeInsets.all(12),
-              height: 109,
-              decoration: BoxDecoration(
-                color: Colors.orange,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: const [
-                  Text(
-                    "Teralokasikan",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontFamily: "Primary",
-                      fontWeight: FontWeight.w600,
+              height: 160,
+              child: Column(
+                children: [
+                  // Banner PageView
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentPage = index;
+                        });
+                      },
+                      itemCount: banners.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              banners[index],
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.image_not_supported,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  VerticalDivider(color: Colors.white, thickness: 2),
-                  Text(
-                    "Belum Teralokasikan",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontFamily: "Primary",
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(height: 12),
+                  // Indicator dots
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      banners.length,
+                      (index) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: _currentPage == index ? 24 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _currentPage == index
+                              ? Colors.orange
+                              : Colors.grey[400],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                     ),
                   ),
                 ],
