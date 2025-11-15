@@ -228,7 +228,7 @@ class _TambahProdukState extends State<TambahProduk> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Selamat Malam",
+                  "Selamat Datang",
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 9,

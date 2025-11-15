@@ -37,7 +37,7 @@ class Detailpengguna extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  "Selamat Malam",
+                  "Selamat Datang",
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 9,

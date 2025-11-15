@@ -59,7 +59,7 @@ class _DetailProdukState extends State<DetailProduk> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  "Selamat Malam",
+                  "Selamat Datang",
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 9,
